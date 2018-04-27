@@ -34,21 +34,37 @@ variables, or a mix of both. If both are provided, command line
 options take precedence.
 
 
-=======       ==========        ==========================================
-ENV VAR       CL Options        Desciption
-=======       ==========        ==========================================
-SATS_API_KEY  (None)            (**Required**) An OAUTH token with
-                                ``repo`` access.
-SATS_TAG_NAME -t, --tag-name    (**Required**) Either the tag name
-                                *OR* the ``latest`` option must be
-                                provided. If both are used, tag name
-                                takes precedence.
-(None)        -l, --latest      (**Required**) Either this option
-                                *OR* ``--tag-name`` must be used.
-                                When used, Satsuki will perform any
-                                operations on the latest release.
-(None)        -u, --upsert      Indicates to either update or create
-                                the release with the provided
-                                information.
-=======       ==========        ==========================================
+=====  =====
+col 1  col 2
+=====  =====
+1      Second column of row 1.
+2      Second column of row 2.
+       Second line of paragraph.
+3      - Second column of row 3.
+
+       - Second item in bullet
+         list (row 3, column 2).
+\      Row 4; column 1 will be empty.
+=====  =====
+
+
+
+=======         ===============   ==========================================
+ENV VAR         CL Options        Desciption
+=======         ===============   ==========================================
+SATS_API_KEY    None              An OAUTH token with repo access.
+SATS_TAG_NAME   -t, --tag-name    (**Required**) Either the tag name
+                                  *OR* the ``latest`` option must be
+                                  provided. If both are used, tag name
+                                  takes precedence.
+
+(None)          -l, --latest      (**Required**) Either this option
+                                  *OR* ``--tag-name`` must be used.
+                                  When used, Satsuki will perform any
+                                  operations on the latest release.
+
+(None)          -u, --upsert      Indicates to either update or create
+                                  the release with the provided
+                                  information.
+=======         ==========        ==========================================
 
