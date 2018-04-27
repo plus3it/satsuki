@@ -49,9 +49,9 @@ col 1  col 2
 
 
 
-=======         ===============   ==========================================
+==============  ===============   ==========================================
 ENV VAR         CL Options        Desciption
-=======         ===============   ==========================================
+==============  ===============   ==========================================
 SATS_API_KEY    None              An OAUTH token with repo access.
 SATS_TAG_NAME   -t, --tag-name    (**Required**) Either the tag name
                                   *OR* the ``latest`` option must be
@@ -64,5 +64,9 @@ SATS_TAG_NAME   -t, --tag-name    (**Required**) Either the tag name
 \               -u, --upsert      Indicates to either update or create
                                   the release with the provided
                                   information.
-=======         ===============   ==========================================
+==============  ===============   ==========================================
+
+
+
+
 
