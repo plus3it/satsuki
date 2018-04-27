@@ -57,14 +57,12 @@ SATS_TAG_NAME   -t, --tag-name    (**Required**) Either the tag name
                                   *OR* the ``latest`` option must be
                                   provided. If both are used, tag name
                                   takes precedence.
-
-(None)          -l, --latest      (**Required**) Either this option
+\               -l, --latest      (**Required**) Either this option
                                   *OR* ``--tag-name`` must be used.
                                   When used, Satsuki will perform any
                                   operations on the latest release.
-
-(None)          -u, --upsert      Indicates to either update or create
+\               -u, --upsert      Indicates to either update or create
                                   the release with the provided
                                   information.
-=======         ==========        ==========================================
+=======         ===============   ==========================================
 
