@@ -43,7 +43,8 @@ ENV VAR         CL Options        Desciption
                                   the release with the provided
                                   information and/or upload a release
                                   asset.
-(None)          --delete          Delete the release.
+(None)          --delete          Delete the release. If a file is provided,
+                                  the file (release asset) is deleted instead.
 ==============  ===============   ==========================================
 
 
