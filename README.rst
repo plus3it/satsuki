@@ -67,7 +67,7 @@ as long as you install Python 3 and pip.)
 **Step 3: Setup the Travis YAML Script Step**
 
 We'll use the ``script`` step to build an application into a OS-
-machine specific binary using `GravityBee <https://github.com/YakDriver/gravitybee>`_. 
+machine specific binary using `GravityBee <https://github.com/YakDriver/gravitybee>`_.
 
 .. code-block:: yaml
 
@@ -79,8 +79,8 @@ machine specific binary using `GravityBee <https://github.com/YakDriver/gravityb
 
 **Step 4: Setup the Travis YAML Before Deploy Step**
 
-Here assign 
-values to environment variables so that Satsuki can use them to 
+Here assign
+values to environment variables so that Satsuki can use them to
 create the release and we'll tag the release.
 
 .. code-block:: yaml
@@ -183,6 +183,7 @@ SATS_PRERELEASE   -p, --pre         **[Flag]** Whether or not this release
                                     is a prerelease. *Default: Not*
 SATS_DRAFT        -d, --draft       **[Flag]** Whether or not this release
                                     is a draft. *Default: Not*
+SATS_VERBOSE      -v, --verbose     **[Flag]** Verbose mode. *Default: Not*
 ================  ===============   ==========================================
 
 

@@ -5,6 +5,7 @@ python:
 install:
   - pip install --editable .
 script:
+  - env
   - pytest
 before_deploy:
   - |

@@ -17,7 +17,9 @@ click.disable_unicode_literals_warning = True
 @click.option('--upsert', 'upsert', is_flag=True, default=False,
     help='Command to create/update a release.')
 @click.option('--delete', 'delete', is_flag=True, default=False,
-    help='Command to delete a release.')              
+    help='Command to delete a release.')    
+@click.option('--verbose', '-v', 'verbose', envvar='SATS_VERBOSE',
+    is_flag=True, default=None, help='Verbose mode')                
 @click.option('--tag-name', '-t', 'tag_name', envvar='SATS_TAG_NAME',
     default=None, help='[Required] Either the tag name OR the '
     + '--latest option must be provided. If both are used, tag name '
@@ -35,7 +37,7 @@ click.disable_unicode_literals_warning = True
     default=None, help='Specifies the commitish value that determines '
     + 'where the Git tag is created from. Default: None')  
 @click.option('--file', '-f', 'file', envvar='SATS_FILE', multiple=True,
-    default=None, help='File(s) to be uploaded as release asset(s). '
+    default=[], help='File(s) to be uploaded as release asset(s). '
     + 'If the file name contains an asterik (*) it will be treated as '
     + 'a POSIX-style glob and all matching files will be uploaded. ' 
     + 'This option can be used multiple times to upload multiple '
