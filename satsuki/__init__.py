@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 """satsuki module.
 
-This module helps give programmatic access to the setup configuration
-of a package and allows automatic installation of required packages
-and importing of modules. This can be useful for automated
-environments.
+Satsuki is a Python package that helps manage GitHub releases and
+release assets. Satsuki is especially useful paired with Continuous
+Integration/ Continuous Deployment (CI/CD) tools such as Travis CI and
+AppVeyor.
 
 This module can be used by python scripts or through the included command-
 line interface (CLI).

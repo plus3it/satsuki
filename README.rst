@@ -151,7 +151,7 @@ SATS_TAG_NAME     -t, --tag-name    **[Required]** Either the tag name
                                     *OR* the ``--latest`` option must be
                                     provided. If both are used, tag name
                                     takes precedence.
-SATS_REL_NAME     -n, --rel-name    The name of the release.
+SATS_REL_NAME     -r, --rel-name    The name of the release.
                                     *Default: tag name*
 SATS_LATEST       --latest          **[Required][Flag]** Either this option
                                     *OR* ``--tag-name`` must be used.
@@ -176,8 +176,8 @@ SATS_LABEL        -l, --label       Label to display for files instead of the
                                     lable. *Default: GitHub will use the raw
                                     file name.*
 SATS_MIME         -m, --mime        The mime type for files. *Default:
-                                    A guess of the file type or
-                                    ``application/octet-stream`` if all else
+                                    A guess of the file type or*
+                                    ``application/octet-stream`` *if all else
                                     fails.*
 SATS_PRERELEASE   -p, --pre         **[Flag]** Whether or not this release
                                     is a prerelease. *Default: Not*
