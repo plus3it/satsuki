@@ -120,23 +120,9 @@ Satsuki can be used with command line (CL) options or environment
 variables, or a mix of both. If both are provided, command line
 options take precedence.
 
-Command Flags
--------------
 
-==============  ===============   ==========================================
-ENV VAR         CL Options        Desciption
-==============  ===============   ==========================================
-(None)          --upsert          **[Default]** Either update or create
-                                  the release with the provided
-                                  information and/or upload a release
-                                  asset.
-(None)          --delete          Delete the release. If a file is provided,
-                                  the file (release asset) is deleted instead.
-==============  ===============   ==========================================
-
-
-Information Options
--------------------
+Options
+-------
 
 For environment variable flags, the existence of the environment variable
 is sufficient to trigger the flag. It can be set to any value.
@@ -145,13 +131,23 @@ is sufficient to trigger the flag. It can be set to any value.
 ================  ===============   ==========================================
 ENV VAR           CL Options        Desciption
 ================  ===============   ==========================================
-SATS_TOKEN        None              **[Required]** An OAUTH token with
+SATS_TOKEN        --token           **[Required]** An OAUTH token with
                                     repo access.
+SATS_COMMAND      -c, --command     The operation to perform on the GitHub
+                                    release. Choose from ``upsert`` or
+                                    ``delete``. If ``delete`` is selected and a
+                                    file is provided, the file (release
+                                    asset) is deleted instead of the release.
+                                    *Default:* ``upsert``
+SATS_REPO         -r, --repo        **[Required]** The GitHub repository to
+                                    work with.
+SATS_USER         -u, --user        **[Required]** The owner of the repository
+                                    to work with.
 SATS_TAG_NAME     -t, --tag-name    **[Required]** Either the tag name
                                     *OR* the ``--latest`` option must be
                                     provided. If both are used, tag name
                                     takes precedence.
-SATS_REL_NAME     -r, --rel-name    The name of the release.
+SATS_REL_NAME     -n, --rel-name    The name of the release.
                                     *Default: tag name*
 SATS_LATEST       --latest          **[Required][Flag]** Either this option
                                     *OR* ``--tag-name`` must be used.
@@ -160,7 +156,7 @@ SATS_LATEST       --latest          **[Required][Flag]** Either this option
                                     *Default: Not*
 SATS_BODY         -b, --body        The blurb that shows up with releases.
                                     *Default: None*
-SATS_COMMITISH    -c, --commitish   Specifies the commitish value that
+SATS_COMMITISH    -o, --commitish   Specifies the commitish value that
                                     determines where the Git tag is created
                                     from. *Default: None*
 SATS_FILE         -f, --file        File(s) to be uploaded as release asset(s).

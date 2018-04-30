@@ -74,6 +74,7 @@ class Arguments(object):
     # class
     COMMAND_UPSERT = "upsert"
     COMMAND_DELETE = "delete"
+    PER_PAGE = 10
 
     def __init__(self, *args, **kwargs):
         """Instantiation"""
@@ -86,27 +87,44 @@ class Arguments(object):
         # package level
         satsuki.verbose = kwargs.get('verbose',False)
 
-        # flags
-        if kwargs.get('upsert',False):
+        # command
+        if kwargs.get('command',False):
             self.command = Arguments.COMMAND_UPSERT
-        elif kwargs.get('delete',False):
-            self.command = Arguments.COMMAND_DELETE
+        elif kwargs.get('command') == Arguments.COMMAND_UPSERT or \
+            kwargs.get('command') == Arguments.COMMAND_DELETE:
+            self.command = kwargs.get('command')
         else:
-            self.command = Arguments.COMMAND_UPSERT
+            print(
+                satsuki.VERB_MESSAGE_PREFIX,
+                "[ERROR] Invalid command:",
+                kwargs.get('command')
+            )
+            raise AttributeError
 
+        # flags
         self.latest = kwargs.get('latest',False)
         self.pre = kwargs.get('pre',False)
         self.draft = kwargs.get('draft',False)
 
         # auth - required
-        self.api_token = os.environ.get('SATS_TOKEN', None)
+        self.api_token = kwargs.get('token',None)
         if self.api_token is None:
             print(
                 satsuki.VERB_MESSAGE_PREFIX,
-                "ERROR: No GitHub API token was provided using "
+                "[ERROR] No GitHub API token was provided using "
                 + "SATS_TOKEN environment variable."
             )
             raise PermissionError
+
+        # repo / user - required
+        self.repo = kwargs.get('repo', None)
+        self.user = kwargs.get('user', None)
+        if self.repo is None or self.user is None:
+            print(
+                satsuki.VERB_MESSAGE_PREFIX,
+                "ERROR: User and repo are required."
+            )
+            raise RuntimeError
 
         # tag-name - required (or latest)
         self.tag_name = kwargs.get('tag_name', None)
@@ -128,6 +146,8 @@ class Arguments(object):
 
         satsuki.verboseprint("Arguments:")
         satsuki.verboseprint("command:",self.command)
+        satsuki.verboseprint("repo:",self.repo)
+        satsuki.verboseprint("user:",self.user)
         satsuki.verboseprint("latest:",self.latest)
         satsuki.verboseprint("pre:",self.pre)
         satsuki.verboseprint("draft:",self.draft)
@@ -138,13 +158,11 @@ class Arguments(object):
         satsuki.verboseprint("label:",self.label)
         satsuki.verboseprint("mime:",self.mime)
         satsuki.verboseprint("# files:",len(self.files))
-        
 
         if self.files is not None:
             for one_file in self.files:
                 satsuki.verboseprint("file:",one_file)
 
-        sys.exit()
 
 class ReleaseMgr(object):
     """
@@ -168,157 +186,17 @@ class ReleaseMgr(object):
 
 
         satsuki.verboseprint("ReleaseMgr:")
-        satsuki.verboseprint("operating_system:",self.operating_system)
-        satsuki.verboseprint("machine_type:",self.machine_type)
-        satsuki.verboseprint("standalone_name:",self.standalone_name)
+
+        self._get_latest()
 
 
     def _get_latest(self):
-        client = Github(config.get_github_token(), per_page=PER_PAGE)
-        user = client.get_user('PyGithub')
-        repository = client.get_repo('PyGithub')
+        satsuki.verboseprint("Getting latest release")
+        gh = github.Github(self.args.api_token, per_page=Arguments.PER_PAGE)
+        repository = gh.get_repo(self.args.user + '/' + self.args.repo)
         releases = repository.get_releases()
 
         for release in releases:
-            print 'release ', release
-            print 'release.name ', release.name
-            
-        # get the hook ready
-        template = Template(open(os.path.join(self.gb_dir, "hook-template"), "r").read())
-
-        hook = template.safe_substitute({ 'app_name': self.args.app_name })
-
-        # 1 extra data
-        hook += "# collection extra data, if any (using --extra-data option)"
-        try:
-            for data in self.args.extra_data:
-                #datas.append(('../src/watchmaker/static', './watchmaker/static'))
-                hook += "\ndatas.append(('"
-                hook += self.args.pkg_dir + os.sep
-                if self.args.src_dir != '.':
-                    hook += self.args.src_dir + os.sep
-                hook += self.args.pkg_name + os.sep + data
-                hook += "', '" + self.args.pkg_name + "/" + data + "'))"
-                hook += "\n\n"
-        except:
-            pass
-
-        # 2 package metadata
-        hook += "# add dependency metadata"
-        for package in satsuki.pyppy.get_required():
-            #datas += copy_metadata(pkg)
-            hook += "\ndatas += copy_metadata('" + package + "')"
-        hook += "\n"
-
-        # 3 write file
-        self.hook_file = os.path.join(self.args.work_dir, "hook-" + self.args.pkg_name + ".py")
-        f = open(self.hook_file,"w+")
-        f.write(hook)
-        f.close()
-
-        satsuki.verboseprint("Created hook file:",self.hook_file)
-
-    def _cleanup(self):
-        # set self.created_file ad self.created_path even if not deleting
-        for standalone in glob.glob(os.path.join(self.args.work_dir, 'dist', self.standalone_name + '*')):
-            self.created_path = standalone
-            self.created_file = os.path.basename(self.created_path)
-            satsuki.verboseprint("Filename:", self.created_file)
-
-        if self.args.clean:
-            satsuki.verboseprint("Cleaning up...")
-
-            # clean work dir
-            # get standalone app out first if it exists
-            satsuki.verboseprint("Moving standalone application to current directory:")
-            if os.path.exists(os.path.join(os.getcwd(), self.created_file)):
-                satsuki.verboseprint("File already exists, removing...")
-                os.remove(os.path.join(os.getcwd(), self.created_file))
-            shutil.move(self.created_path, os.getcwd())
-
-            # new path for app now it's been copied
-            self.created_path = os.path.join(os.getcwd(), self.created_file)
-
-            if os.path.isdir(self.args.work_dir):
-                satsuki.verboseprint("Deleting working dir:", self.args.work_dir)
-                shutil.rmtree(self.args.work_dir)
-
-        satsuki.verboseprint("Absolute path of standalone:", self.created_path)
-
-    def generate(self):
-        """
-        if self.operating_system.lower() == 'linux':
-            src_path = '/var/opt/git/watchmaker/src'
-            additional_hooks = '/var/opt/git/satsuki/pyinstaller'
-        elif self.operating_system.lower() == 'windows':
-            src_path = 'C:\\git\\watchmaker\\src'
-            additional_hooks = 'C:\\git\\satsuki\\pyinstaller'
-        """
-
-        self._create_hook()
-
-        try:
-            shutil.copy2(self.args.script_path, self._temp_script)
-        except FileNotFoundError:
-            print(
-                satsuki.VERB_MESSAGE_PREFIX,
-                "ERROR: Satsuki could not find your application's " +
-                "script in the virtual env that was installed by pip. " +
-                "Possible solutions:\n1. Run Satsuki in a virtual " +
-                "env;\n2. Point Satsuki to the script using the " +
-                "--script option;\n3. Install your application using " +
-                "pip;\n4. Make sure your application has a console " +
-                "script entry in setup.py or setup.cfg."
-            )
-            self._cleanup()
-            return False
-
-        commands = [
-            'pyinstaller',
-            '--noconfirm',
-            #'--clean',
-            '--onefile',
-            '--name', self.standalone_name,
-            '--paths', self.args.src_dir,
-            '--additional-hooks-dir', self.args.work_dir,
-            '--specpath', self.args.work_dir,
-            '--workpath', os.path.join(self.args.work_dir, 'build'),
-            '--distpath', os.path.join(self.args.work_dir, 'dist'),
-            '--hidden-import', self.args.pkg_name,
-            # This hidden import is introduced by botocore.
-            # We won't need this when this issue is resolved:
-            # https://github.com/pyinstaller/pyinstaller/issues/1844
-            '--hidden-import', 'html.parser',
-            # This hidden import is also introduced by botocore.
-            # It appears to be related to this issue:
-            # https://github.com/pyinstaller/pyinstaller/issues/1935
-            '--hidden-import', 'configparser',
-            #'--hidden-import', 'packaging', # was required by pyinstaller for a while
-            #'--hidden-import', 'packaging.specifiers', # was required by pyinstaller for a while
-            '--hidden-import', 'pkg_resources',
-        ]
-
-        # get all the packages called for by package
-        for pkg in satsuki.pyppy.get_required():
-            commands += [
-                '--hidden-import', pkg,
-            ]
-
-        commands += [
-            self._temp_script
-        ]
-
-        if self.operating_system != 'windows':
-            insert_point = commands.index('--onefile') + 1
-            commands[insert_point:insert_point] = ['--runtime-tmpdir', '.']
-
-        satsuki.verboseprint("PyInstaller commands:")
-        satsuki.verboseprint(*commands, sep=', ')
-
-        subprocess.run(
-            commands,
-            check=True)
-
-        self._cleanup()
-        return True
+            print('release ', release)
+            print('release.name ', release.name)
 
