@@ -198,5 +198,8 @@ class ReleaseMgr(object):
 
         for release in releases:
             print('release ', release)
-            print('release.name ', release.name)
+            print('tag: ', release.tag_name)
+            print('title: ', release.title)
+            print('url: ', release.url)
+
 
