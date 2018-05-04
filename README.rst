@@ -140,7 +140,8 @@ If an environment variable is used as a flag, the existence of the
 environment variable
 is sufficient to trigger the flag. It can be set to any value.
 
-** Release/Satsuki Related **
+Release/Satsuki Related
+-----------------------
 
 ================  ===============   ==========================================
 ENV VAR           CL Options        Desciption
@@ -178,7 +179,9 @@ SATS_DRAFT        -d, --draft       **[Flag]** Whether or not this release
 SATS_VERBOSE      -v, --verbose     **[Flag]** Verbose mode. *Default: Not*
 ================  ===============   ==========================================
 
-** Tag Related **
+
+Tag Related
+-----------
 
 ================  ===============   ==========================================
 ENV VAR           CL Options        Desciption
@@ -208,7 +211,9 @@ SATS_COMMITISH    --commitish       Can be any branch or commit SHA. Unused
                                     GitHub will default to the default branch.*
 ================  ===============   ==========================================
 
-** Asset Related **
+
+Asset Related
+-------------
 
 These options can be used multiple times. If there is one label or one MIME
 type, and multiple files, the same label and MIME type will be applied to each
@@ -240,7 +245,9 @@ SATS_MIME         -m, --mime        The mime type for files. *Default:
                                     fails.*
 ================  ===============   ==========================================
 
-** The Files File **
+
+The Files File
+--------------
 
 Satsuki also accepts a JSON-formatted file containing information about
 assets to be uploaded (see the ``--file-file`` option above). The file
@@ -261,3 +268,4 @@ This is an example of the format.
             'path': '/path/to/file/gbtestapp-4.2.6-standalone-osx-x86_64'
         }
     ]
+
