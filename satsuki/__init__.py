@@ -99,7 +99,7 @@ class Arguments(object):
 
         # slug or repo / user - required
         self.slug = self.kwargs.get(
-            'slug', 
+            'slug',
             os.environ.get(
                 'TRAVIS_REPO_SLUG',
                 os.environ.get(
@@ -131,14 +131,14 @@ class Arguments(object):
         try:
             self.repo = self.gh.get_repo(self.slug, lazy=False)
         except github.GithubException:
-            satsuki.error("Repository not found.", ReferenceError)  
+            satsuki.error("Repository not found.", ReferenceError)
 
         try:
-            if self.args.latest:
+            if self.latest:
                 self.working_release = self.repo.get_latest_release()
             else:
-                self.working_release = self.repo.get_release(self.args.tag)
-            
+                self.working_release = self.repo.get_release(self.tag)
+
             satsuki.verboseprint('Release ID: ', self.working_release.id)
             satsuki.verboseprint('Tag: ', self.working_release.tag_name)
             satsuki.verboseprint('Title: ', self.working_release.title)
@@ -154,7 +154,7 @@ class Arguments(object):
 
     def _init_tag(self):
         # find out if we can get a release (need tag or latest)
-        self.latest = self.kwargs.get('latest',False)            
+        self.latest = self.kwargs.get('latest',False)
 
         # tag - required (or latest)
         self.tag = self.kwargs.get('tag', None)
@@ -207,48 +207,57 @@ class Arguments(object):
                     RuntimeError
                 )
             else:
-                self.internal_command = Arguments._COMMAND_INSERT   
+                self.internal_command = Arguments._COMMAND_INSERT
 
     def _init_files(self):
+        """
+        This will handle multple files from the command lines args
+        and/or a file_file.
+        """
 
         self.files = self.kwargs.get('file', [])
         self.labels = self.kwargs.get('label', [])
         self.mimes = self.kwargs.get('mime', [])
-        self.file_file = self.kwargs.get('file_file','gravitybee.file')
 
-        if len(self.files) == 0 \
-            and os.path.isfile(self.file_file):
+        self.file_file = self.kwargs.get('file_file',None)
+
+        if len(self.files) == 0 and self.file_file is None:
+            self.file_file = 'gravitybee.file' # for integration with GravityBee
+
+        # handle the file_file
+        # todo: validate JSON
+        if os.path.isfile(self.file_file):
             file_file = open(self.file_file, "r")
             self.file_info = json.loads(file_file.read())
             file_file.close()
+        else:
+            self.file_info = []
 
-            with open(self.file_file) as f:
-                content = f.readlines()
-                self.files = [x.strip() for x in content] 
-
-        if len(self.files) != len(self.labels) \
-            and len(self.labels) not in [0, 1]:
-            satsuki.error(
-                "Invalid number of labels: " + len(self.labels),
-                RuntimeError
-            )
-
-        if len(self.files) != len(self.mimes) \
-            and len(self.mimes) not in [0, 1]:
-            satsuki.error(
-                "Invalid number of MIME types: " + len(self.mimes),
-                RuntimeError
-            )
+        # handle the command line files, et al.
 
         # if there are files, we'll set up a list of dicts with info
         # about each. if there's one label, it will be applied to all
         # files. same for mimes.
-        self.file_info = []
         if len(self.files) > 0:
+            if len(self.files) != len(self.labels) \
+                and len(self.labels) not in [0, 1]:
+                satsuki.error(
+                    "Invalid number of labels: " + len(self.labels),
+                    RuntimeError
+                )
+
+            if len(self.files) != len(self.mimes) \
+                and len(self.mimes) not in [0, 1]:
+                satsuki.error(
+                    "Invalid number of MIME types: " + len(self.mimes),
+                    RuntimeError
+                )
+
             for i, filename in enumerate(self.files):
                 for one_file in glob.glob(filename):
                     info = {}
-                    info['file'] = one_file
+                    info['filename'] = os.path.basename(one_file)
+                    info['path'] = one_file
                     if len(self.labels) > 0:
                         if len(self.labels) == 1:
                             info['label'] = self.labels[0]
@@ -259,11 +268,11 @@ class Arguments(object):
 
                     if len(self.mimes) > 0:
                         if len(self.mimes) == 1:
-                            info['mime'] = self.mimes[0]
+                            info['mime-type'] = self.mimes[0]
                         else:
-                            info['mime'] = self.mimes[i]
+                            info['mime-type'] = self.mimes[i]
                     else:
-                        info['mime'] = None
+                        info['mime-type'] = None
 
                     self.file_info.append(info)
 
@@ -283,9 +292,9 @@ class Arguments(object):
         self.rel_name = self.kwargs.get('rel_name', self.tag)
 
         self.target_commitish = self.kwargs.get(
-            'commitish', 
+            'commitish',
             os.environ.get(
-                'TRAVIS_COMMIT', 
+                'TRAVIS_COMMIT',
                 os.environ.get(
                     'APPVEYOR_REPO_COMMIT',
                     ""
@@ -304,7 +313,7 @@ class Arguments(object):
         self.kwargs = kwargs
 
         # package level
-        satsuki.verbose = kwargs.get('verbose',False)            
+        satsuki.verbose = kwargs.get('verbose',False)
 
         # sub inits
         self._init_basic()
@@ -328,7 +337,7 @@ class Arguments(object):
         satsuki.verboseprint("pre:",self.pre)
         satsuki.verboseprint("draft:",self.draft)
         satsuki.verboseprint("tag:",self.tag)
-        satsuki.verboseprint("target_commitish:",self.target_commitish)        
+        satsuki.verboseprint("target_commitish:",self.target_commitish)
 
         satsuki.verboseprint("# files:", len(self.files))
         satsuki.verboseprint("# labels:", len(self.labels))
@@ -337,12 +346,12 @@ class Arguments(object):
         if self.file_info is not None:
             for info in self.file_info:
                 satsuki.verboseprint(
-                    "file:", 
-                    info['file'], 
-                    "label:", 
+                    "file:",
+                    info['filename'],
+                    "label:",
                     info['label'],
                     "mime:",
-                    info['mime']
+                    info['mime-type']
                 )
 
         assert isinstance(self.internal_command, str), \
@@ -368,50 +377,46 @@ class ReleaseMgr(object):
         satsuki.verboseprint("ReleaseMgr:")
         self.args = args
 
-   
 
-    def _create_release(self):       
+
+    def _create_release(self):
         satsuki.verboseprint("Creating release:",self.args.rel_name)
         if isinstance(self.args.tag, int):
             # PyGithub will treat it as a release id when finding later
             satsuki.error(
-                "Integer tag name given: " + self.args.tag, 
+                "Integer tag name given: " + self.args.tag,
                 TypeError
             )
         if not isinstance(self.args.target_commitish, str):
             satsuki.error(
-                "Commit SHA is required", 
+                "Commit SHA is required",
                 AttributeError
             )
 
-        """ 
-        tag, name, message, draft=False, prerelease=False, 
+        """
+        tag, name, message, draft=False, prerelease=False,
         target_commitish=github.GithubObject.NotSet
         """
-        self.working_release = self.repo.create_git_release(
+        self.args.working_release = self.args.repo.create_git_release(
             self.args.tag,
             self.args.rel_name,
             self.args.body,
             draft=self.args.draft,
             prerelease=self.args.pre,
             target_commitish=self.args.target_commitish
-        )  
+        )
 
     def _update_release(self):
-        satsuki.verboseprint("Updating release, id:",self.working_release.id)
-        #PyGithub makes everything required so fudge updating
-        if self.args.body is None:
-            self.args.
-
-        """ 
+        satsuki.verboseprint("Updating release, id:",self.args.working_release.id)
+        """
         name, message, draft=False, prerelease=False
         """
-        self.working_release.update_release(
+        self.args.working_release.update_release(
             self.args.rel_name,
             self.args.body,
             draft=self.args.draft,
             prerelease=self.args.pre
-        )          
+        )
 
         # in order to upsert...
         # 1. is it update or create?
@@ -435,7 +440,10 @@ class ReleaseMgr(object):
         #   - update release asset (only name & label, not the file itself)
         #     http://pygithub.readthedocs.io/en/latest/github_objects/GitReleaseAsset.html#github.GitReleaseAsset.GitReleaseAsset.update_asset
 
-    def _delete(self):
+    def _delete_file(self):
+        satsuki.verboseprint("Deleting release asset:",self.args.tag)
+
+    def _delete_release(self):
         satsuki.verboseprint("Deleting release:",self.args.tag)
         # 1. Is it delete release or delete asset?
         #   - If file(s) included, always a delete asset, even if they don't exist
@@ -450,18 +458,12 @@ class ReleaseMgr(object):
          # https://github.com/PyGithub/PyGithub/blob/a519e4675a911a3f20f1ad197cbbbb14bdd1842d/github/GitRelease.py#L160
 
     def execute(self):
-        # Exist Upsert ==> update
-        # Exist Delete ==> delete
-        # Not   Upsert ==> create
-        # Not   Delete ==> error
-        existing_release = self._get_release()
-
-
-        elif self.args.command == Arguments.COMMAND_DELETE:
-            self._delete()
-        elif self.args.command == Arguments.COMMAND_UPSERT:
-            if self.working_release is None:
-                self._create_release()
-            else:
-                self._update_release()
+        if self.args.internal_command == Arguments._COMMAND_DELETE_FILE:
+            self._delete_file()
+        elif self.args.internal_command == Arguments._COMMAND_DELETE_REL:
+            self._delete_release()
+        elif self.args.internal_command == Arguments._COMMAND_INSERT:
+            self._create_release()
+        elif self.args.internal_command == Arguments._COMMAND_UPDATE:
+            self._update_release()
 
