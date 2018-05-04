@@ -11,7 +11,7 @@ install:
 script:
   - env
   - satsuki --user YakDriver --repo pyppyn --latest -v
-  #- pytest
+  - pytest
 before_deploy:
   - |
     if [ "$TRAVIS_BRANCH" = "dev" ]; then

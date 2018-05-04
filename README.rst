@@ -24,7 +24,7 @@ tools such as `Travis CI <https://travis-ci.org>`_ and `AppVeyor <https://www.ap
 Why not just use the Travis CI GitHub Releases provider? Good question.
 The simple answer is that the provider doesn't work very well yet.
 In specific, you can't update an existing release or add files
-(assets) to a release or provide a release body and a release asset
+(assets) to a release or provide a release message and a release asset
 at the same time.
 
 Satsuki and Travis CI Example
@@ -86,10 +86,10 @@ create the release and we'll tag the release.
 .. code-block:: yaml
 
     before_deploy:
-      - export SATS_TAG_NAME=$(grep "version = " $TRAVIS_BUILD_DIR/setup.cfg | sed "s/version = //")
-      - export SATS_BODY="* Here is the body for the release"
+      - export SATS_TAG=$(grep "version = " $TRAVIS_BUILD_DIR/setup.cfg | sed "s/version = //")
+      - export SATS_BODY="* Here is the message for the release"
       - export SATS_FILE="mysuperapp-1.2.3-standalone-linux-x86_64"
-      - git tag -a $SATS_TAG_NAME -m "This is the v$SATS_TAG_NAME message"
+      - git tag -a $SATS_TAG -m "This is the v$SATS_TAG message"
 
 
 **Step 5: Setup the Travis YAML Deploy Step**
@@ -124,9 +124,23 @@ options take precedence.
 Options
 -------
 
-For environment variable flags, the existence of the environment variable
+Using Satsuki, you can create releases. A release is a GitHub feature.
+However, a release is related to a tag, which is a pure Git feature. (If
+the tag doesn't exist, Satsuki will create it along with the release.)
+You can also create assets (e.g., binary files) that are
+associated with releases. Thus Satsuki has options that relate to each:
+Asset ==> Release ==> Tag.
+
+Options from each, tag, release, and asset, can be provided at once,
+and Satsuki
+will attempt to act appropriately on each. For example, in one
+command you can create a tag, release, and asset.
+
+If an environment variable is used as a flag, the existence of the
+environment variable
 is sufficient to trigger the flag. It can be set to any value.
 
+** Release/Satsuki Related **
 
 ================  ===============   ==========================================
 ENV VAR           CL Options        Desciption
@@ -139,26 +153,71 @@ SATS_COMMAND      -c, --command     The operation to perform on the GitHub
                                     file is provided, the file (release
                                     asset) is deleted instead of the release.
                                     *Default:* ``upsert``
+SATS_SLUG         -s, --slug        **[Required]** Either repo and user or
+                                    the slug (in the form user/repo) must be
+                                    provided. *If not provided, it will default
+                                    to the value provided by Travis CI or
+                                    AppVeyor, if any.*
 SATS_REPO         -r, --repo        **[Required]** The GitHub repository to
                                     work with.
 SATS_USER         -u, --user        **[Required]** The owner of the repository
                                     to work with.
-SATS_TAG_NAME     -t, --tag-name    **[Required]** Either the tag name
-                                    *OR* the ``--latest`` option must be
-                                    provided. If both are used, tag name
-                                    takes precedence.
 SATS_REL_NAME     -n, --rel-name    The name of the release.
                                     *Default: tag name*
 SATS_LATEST       --latest          **[Required][Flag]** Either this option
-                                    *OR* ``--tag-name`` must be used.
+                                    *OR* ``--tag`` must be used.
                                     When used, Satsuki will perform any
                                     operations on the latest release.
                                     *Default: Not*
-SATS_BODY         -b, --body        The blurb that shows up with releases.
-                                    *Default: None*
-SATS_COMMITISH    -o, --commitish   Specifies the commitish value that
-                                    determines where the Git tag is created
-                                    from. *Default: None*
+SATS_BODY         -b, --body        The message that shows up with releases.
+                                    *Default: Release <tag>*
+SATS_PRE          -p, --pre         **[Flag]** Whether or not this release
+                                    is a prerelease. *Default: Not*
+SATS_DRAFT        -d, --draft       **[Flag]** Whether or not this release
+                                    is a draft. *Default: Not*
+SATS_VERBOSE      -v, --verbose     **[Flag]** Verbose mode. *Default: Not*
+================  ===============   ==========================================
+
+** Tag Related **
+
+================  ===============   ==========================================
+ENV VAR           CL Options        Desciption
+================  ===============   ==========================================
+SATS_TAG          -t, --tag         **[Required]** Either the tag
+                                    *OR* the ``--latest`` option must be
+                                    provided. If both are used, tag
+                                    takes precedence. In finding existing
+                                    releases, the "tag" value may be either
+                                    the release ID (e.g., 10746271) or tag
+                                    name (e.g., v0.1.0). However, if a
+                                    release ID is provided, and it does not
+                                    exist, an error will be thrown to avoid
+                                    creating a tag with an ID-like name.
+                                    *If not provided,
+                                    will default
+                                    to the value provided by Travis CI or
+                                    AppVeyor, if any.*
+SATS_COMMITISH    --commitish       Can be any branch or commit SHA. Unused
+                                    if the Git tag already exists.
+                                    *If not provided, it will
+                                    default
+                                    to the TRAVIS_COMMIT environment variable
+                                    provided by
+                                    Travis CI or APPVEYOR_REPO_COMMIT from
+                                    AppVeyor, if any. If none is provided,
+                                    GitHub will default to the default branch.*
+================  ===============   ==========================================
+
+** Asset Related **
+
+These options can be used multiple times. If there is one label or one MIME
+type, and multiple files, the same label and MIME type will be applied to each
+file. Otherwise, there must be the same number of labels and/or MIME types as
+files, or an error will be thrown.
+
+================  ===============   ==========================================
+ENV VAR           CL Options        Desciption
+================  ===============   ==========================================
 SATS_FILE         -f, --file        File(s) to be uploaded as release asset(s).
                                     If the file name contains an asterik (*)
                                     it will be treated as a POSIX-style glob
@@ -166,6 +225,10 @@ SATS_FILE         -f, --file        File(s) to be uploaded as release asset(s).
                                     This option can be used multiple times
                                     to upload multiple files.
                                     *Default: No file is uploaded.*
+SATS_FILE_FILE    --file-file       Name of file containing name(s) of files
+                                    to be uploaded.
+                                    *Default: Will look for*
+                                    ``gravitybee.file``
 SATS_LABEL        -l, --label       Label to display for files instead of the
                                     file name. Not recommended with multiple
                                     file upload since all will share the same
@@ -175,14 +238,26 @@ SATS_MIME         -m, --mime        The mime type for files. *Default:
                                     A guess of the file type or*
                                     ``application/octet-stream`` *if all else
                                     fails.*
-SATS_PRERELEASE   -p, --pre         **[Flag]** Whether or not this release
-                                    is a prerelease. *Default: Not*
-SATS_DRAFT        -d, --draft       **[Flag]** Whether or not this release
-                                    is a draft. *Default: Not*
-SATS_VERBOSE      -v, --verbose     **[Flag]** Verbose mode. *Default: Not*
 ================  ===============   ==========================================
 
+** The Files File **
 
+Satsuki also accepts a JSON-formatted file containing information about
+assets to be uploaded (see the ``--file-file`` option above). The file
+can contain information about multiple files and should contain
+information about files
+accessible to Satsuki, with paths relative to the directory in which
+Satsuki is run.
 
+This is an example of the format.
 
+.. code-block:: json
 
+    [
+        {
+            'filename': 'gbtestapp-4.2.6-standalone-osx-x86_64',
+            'label': 'gbtestapp Standalone Executable (gbtestapp-4.2.6-standalone-osx-x86_64) [GravityBee Build]',
+            'mime-type': 'application/x-executable',
+            'path': '/path/to/file/gbtestapp-4.2.6-standalone-osx-x86_64'
+        }
+    ]
