@@ -260,12 +260,8 @@ This is an example of the format.
 
 .. code-block::
 
-    [
-        {
-            'filename': 'gbtestapp-4.2.6-standalone-osx-x86_64',
-            'label': 'gbtestapp Standalone Executable (gbtestapp-4.2.6-standalone-osx-x86_64) [GravityBee Build]',
-            'mime-type': 'application/x-executable',
-            'path': '/path/to/file/gbtestapp-4.2.6-standalone-osx-x86_64'
-        }
-    ]
+    [{'filename': 'gbtestapp-4.2.6-standalone-osx-x86_64',
+      'label': 'gbtestapp Standalone Executable (gbtestapp-4.2.6-standalone-osx-x86_64) [GravityBee Build]',
+      'mime-type': 'application/x-executable',
+      'path': '/path/to/file/gbtestapp-4.2.6-standalone-osx-x86_64'}]
 
