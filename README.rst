@@ -258,7 +258,7 @@ Satsuki is run.
 
 This is an example of the format.
 
-.. code-block::
+.. code-block:: JSON
 
     [{'filename': 'gbtestapp-4.2.6-standalone-osx-x86_64',
       'label': 'gbtestapp Standalone Executable (gbtestapp-4.2.6-standalone-osx-x86_64) [GravityBee Build]',
