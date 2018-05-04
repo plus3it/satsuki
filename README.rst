@@ -258,7 +258,7 @@ Satsuki is run.
 
 This is an example of the format.
 
-.. code-block:: json
+.. code-block::
 
     [
         {
