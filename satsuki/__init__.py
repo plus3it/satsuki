@@ -15,19 +15,11 @@ Example:
         $ satsuki --help
 """
 
-import sys
 import os
 import github
 import satsuki
-import platform
-import shutil
-import subprocess
 import json
-import uuid
 import glob
-from string import Template
-
-import sys # won't need if no system.exit
 
 __version__ = "0.1.0"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
@@ -42,38 +34,46 @@ def error(message, exception):
     print(satsuki.VERB_MESSAGE_PREFIX, "[ERROR]", message)
     raise exception
 
+
 class Arguments(object):
     """
     A class representing the configuration information needed by the
     satsuki.ReleaseMgr class.
 
     Attributes:
-        clean: A bool indicating whether to clean temporary work from
-            the build when complete.
-        pkg_dir: A str with location of setup.py for the package to
-            be built into a standalone application.
-        src_dir: A str with relative path of directory with the
-            package source code (e.g., src)
-        name_format: A str that represents the format to be used in
-            naming the standalone application.
-        extra_data: A list of str providing any extra data that
-            should be included with the standalone application.
-        work_dir: A str with a relative path of directory to be used
-            by Satsuki for work files.
-        console_script: A str of the name of the first console script
-            listed in setup.py or setup.cfg.
-        app_version: A str of the version of the standalone
-            application pulled from setup.py or setup.cfg.
-        app_name: A str with name of the application (which is not
-            the same as the file name) to be built.
-        pkg_name: A str of the name of the package containing the
-            application that will be built.
-        script_path: A str of the path the script installed by pip
-            when the application is installed.
-        created_file: A str with name of file of the standalone
-            application created.
-        created_path: A str with absolute path and name of file of
-            the standalone application created.
+        api_token: A str with api token for GitHub.
+        slug: A str with user and repo.
+        repo: A str of target repo.
+        user: A str of owner of target repo.
+        gh: A github.github object that represents GitHub level.
+        kwargs: A dict of keyword/value pairs as provided through
+            CLI or init.
+        latest: A bool of whether to use latest release instead
+            of looking for one by name.
+        working_release: A github.GitRelease of the target
+            release.
+        tag: A str with tag representing the release. Usually
+            identifies the release.
+        user_command: A str of command input by user. Must be
+            upsert / delete.
+        internal_command: A str of the command that will actually
+            control what happens (create / update / delete).
+        files: A list of str of files passed in to be uploaded
+            or deleted relative to the release.
+        labels: A list of str of labels associated with the
+            files to be uploaded.
+        mimes: A list of str of mimes associated with the
+            files to be uploaded.
+        file_file: A str with a file to be read to provide
+            information on files. File must be in JSON.
+        file_info: A list of dicts filename, path, label, and mime
+            type for files.
+        pre: A bool representing whether release is prerelease.
+        draft: A bool representing whether release is a draft.
+        body: A str with message associated with the release.
+        rel_name: A str with the title of the release.
+        target_commitish: A str with the SHA of the commit or a
+            branch to associate the tag/release with.
     """
 
     # class
@@ -119,7 +119,7 @@ class Arguments(object):
         # y     *       *       good
         # n     y       y       good
         if self.slug is None and (self.repo is None or self.user is None):
-            satsuki.error("Slug / User & Repo required.", RuntimeError)
+            satsuki.error("Slug / User & Repo required.", AttributeError)
         elif self.slug is None:
             self.slug = self.user + '/' + self.repo
 
@@ -170,7 +170,7 @@ class Arguments(object):
             if self.tag is None:
                 satsuki.error(
                     "Either tag or the latest flag is required.",
-                    RuntimeError
+                    AttributeError
                 )
 
         if isinstance(self.tag, str):
@@ -179,7 +179,7 @@ class Arguments(object):
     def _init_command(self):
 
         # user command
-        if self.kwargs.get('command',False):
+        if not self.kwargs.get('command',False):
             self.user_command = Arguments.COMMAND_UPSERT
         elif self.kwargs.get('command') == Arguments.COMMAND_UPSERT or \
             self.kwargs.get('command') == Arguments.COMMAND_DELETE:
@@ -204,7 +204,7 @@ class Arguments(object):
             if self.user_command == Arguments.COMMAND_DELETE:
                 satsuki.error(
                     "No release found to delete",
-                    RuntimeError
+                    ReferenceError
                 )
             else:
                 self.internal_command = Arguments._COMMAND_INSERT
@@ -243,14 +243,14 @@ class Arguments(object):
                 and len(self.labels) not in [0, 1]:
                 satsuki.error(
                     "Invalid number of labels: " + len(self.labels),
-                    RuntimeError
+                    AttributeError
                 )
 
             if len(self.files) != len(self.mimes) \
                 and len(self.mimes) not in [0, 1]:
                 satsuki.error(
                     "Invalid number of MIME types: " + len(self.mimes),
-                    RuntimeError
+                    AttributeError
                 )
 
             for i, filename in enumerate(self.files):
@@ -277,7 +277,13 @@ class Arguments(object):
                     self.file_info.append(info)
 
     def _init_data(self):
-        # idea here is to not change anything not provided
+        # idea here is to not change anything not provided by user
+
+        # if latest, won't be given tag so this is way to get it
+        self.tag = self.kwargs.get('tag', self.working_release.tag_name)
+
+        # going to overwrite all values, fill in with old values if
+        # no change
         self.pre = self.kwargs.get('pre', self.working_release.prerelease)
         self.draft = self.kwargs.get('draft', self.working_release.draft)
         self.body = self.kwargs.get('body', self.working_release.body)
@@ -339,9 +345,7 @@ class Arguments(object):
         satsuki.verboseprint("tag:",self.tag)
         satsuki.verboseprint("target_commitish:",self.target_commitish)
 
-        satsuki.verboseprint("# files:", len(self.files))
-        satsuki.verboseprint("# labels:", len(self.labels))
-        satsuki.verboseprint("# mimes:", len(self.mimes))
+        satsuki.verboseprint("# files:", len(self.file_info))
 
         if self.file_info is not None:
             for info in self.file_info:
@@ -355,7 +359,7 @@ class Arguments(object):
                 )
 
         assert isinstance(self.internal_command, str), \
-            "No internal command, user: " + self.user_command
+            "No internal command, user command: " + self.user_command
 
 class ReleaseMgr(object):
     """
@@ -364,19 +368,11 @@ class ReleaseMgr(object):
     Attributes:
         args: An instance of satsuki.Arguments containing
             the configuration information for Satsuki.
-        operating_system: A str of the os. This is automatically
-            determined.
-        machine_type: A str of the machine (e.g., x86_64)
-        standalone_name: A str that will be the name of the
-            standalone application.
-        gb_dir: A str of the Satsuki runtime package directory.
-        gb_filename: A str of the runtime filename.
     """
 
     def __init__(self, args=None):
         satsuki.verboseprint("ReleaseMgr:")
         self.args = args
-
 
 
     def _create_release(self):
@@ -466,4 +462,6 @@ class ReleaseMgr(object):
             self._create_release()
         elif self.args.internal_command == Arguments._COMMAND_UPDATE:
             self._update_release()
+
+        return True
 

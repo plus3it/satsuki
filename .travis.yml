@@ -10,8 +10,7 @@ install:
   - pip install --editable .
 script:
   - env
-  - satsuki --user YakDriver --repo pyppyn --latest -v
-  - pytest
+  - pytest --token $SATS_TOKEN
 before_deploy:
   - |
     if [ "$TRAVIS_BRANCH" = "dev" ]; then
