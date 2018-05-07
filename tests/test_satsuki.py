@@ -86,7 +86,7 @@ def test_delete_release(token):
         slug = TEST_SLUG,
         tag = TEST_TAG,
         command = Arguments.COMMAND_DELETE,
-        include_tags = True
+        include_tag = True
     )
 
     del_rel = ReleaseMgr(delete_args)
