@@ -22,7 +22,7 @@ import json
 import glob
 import subprocess
 
-__version__ = "0.1.1"
+__version__ = "0.1.2"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
 
 verbose = False
