@@ -7,17 +7,23 @@ env:
   global:
     - secure: oaJ4/I5yYkryQW2ANWkefp6PwmdGk5L0g5BdSxnGQiH8jdsqS30Nd0LmbUzkklDigaiTb9UIvrPQdrx+tHXoPsyaT6UXr0YRvht1vw4gbDt61+ECWuFgcTECX0A9U/JrDXonaKmeu5UZEpCNrAgAQR1ZsMGaJ2QpVfBtpQZUdwCAPBchFLheK2yr54dzCG9s4yZHJWculTja5rTb/mIqRfze3EIxX5sGjyDYNEVfvqwCu729pO9xd8ZaP1TZtQzltgfSzkMH6/cnzgGLPfKV7yWsJFj0AYOilvcc+XLfgfO76fA4qhchYJJog9+CWTdE48VA0v53YlIud70yPKucTE795zDsLsUqz8FIEYcMNrzm0jKIHp6AZK7MEq6VzRnjmBdgJX2UaHNsKr+0KcM+zbhwMJ3ABMKq3mtjcRnWEkmjwgLdH+DrDhZK/SWIlpVCU1blbiArgHhaGisfyLIHG4406O1Nw+dTrp+HmDU5MsUGp5S6eo7TS/lkTj/11hqDQcjfcReHPqFqUobOvjBEV7jpEgGWUeM2wwf/IGKLbI8A8vGh84Ki9I7v1RPjm2C4GRAPUMdSfbekLTbSyPv3Ul2JmhyAx8tPHEiSe82hjhkiq5S+K6YRgZCPXkDo7kPmu7LY4hhnTpugQUrlhIqDzqxJZjcVpM1tzdoPV83FxLY=
 install:
-  - pip install --editable .
-script:
-  - env
-  - pytest --token $SATS_TOKEN
-before_deploy:
   - export SATS_DO_DEPLOY=yes
   - |
     if [[ $TRAVIS_TAG == Test* ]]; then
       echo "No deployment because Test tag"
       export SATS_DO_DEPLOY=no
     fi
+  - |
+    if [ "$SATS_DO_DEPLOY" = "yes" ]; then
+      pip install --editable .
+    fi
+script:
+  - env
+  - |
+    if [ "$SATS_DO_DEPLOY" = "yes" ]; then
+      pytest --token $SATS_TOKEN
+    fi  
+before_deploy:
   - |
     if [ "$TRAVIS_BRANCH" = "dev" ]; then
       sed -i -E "s/^(version = )(.*)/\1\2.$TRAVIS_BUILD_NUMBER/" $TRAVIS_BUILD_DIR/setup.cfg
