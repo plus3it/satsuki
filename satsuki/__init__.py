@@ -20,6 +20,7 @@ import github
 import satsuki
 import json
 import glob
+import subprocess
 
 __version__ = "0.1.0"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
@@ -54,6 +55,8 @@ class Arguments(object):
             release.
         tag: A str with tag representing the release. Usually
             identifies the release.
+        include_tag: A bool of whether or not to include tag
+            when deleting a release.
         user_command: A str of command input by user. Must be
             upsert / delete.
         internal_command: A str of the command that will actually
@@ -175,6 +178,8 @@ class Arguments(object):
 
         if isinstance(self.tag, str):
             self.latest = False
+
+        self.include_tag = self.kwargs.get('include_tag', False)
 
     def _init_command(self):
 
@@ -308,6 +313,51 @@ class Arguments(object):
             )
         )
 
+    def _verbosity(self):
+        """
+        Verbose printing. Should never cause errors for low priority
+        verbosity.
+        """
+
+        try:
+            # verbosity
+            satsuki.verboseprint("Arguments:")
+            satsuki.verboseprint("user command:",self.user_command)
+            satsuki.verboseprint("internal command:",self.internal_command)
+            satsuki.verboseprint("slug:",self.slug)
+            satsuki.verboseprint("tag:",self.tag)
+
+            if hasattr(self, 'latest'):
+                satsuki.verboseprint("latest:",self.latest)
+            if hasattr(self, 'target_commitish'):
+                satsuki.verboseprint("target_commitish:",self.target_commitish)
+            if hasattr(self, 'rel_name'):
+                satsuki.verboseprint("rel_name:",self.rel_name)
+            if hasattr(self, 'body'):
+                satsuki.verboseprint("body:",self.body)
+            if hasattr(self, 'pre'):
+                satsuki.verboseprint("pre:",self.pre)
+            if hasattr(self, 'draft'):
+                satsuki.verboseprint("draft:",self.draft)
+
+            satsuki.verboseprint("# files:", len(self.file_info))
+
+            if self.file_info is not None:
+                for info in self.file_info:
+                    satsuki.verboseprint(
+                        "file:",
+                        info['filename'],
+                        "label:",
+                        info['label'],
+                        "mime:",
+                        info['mime-type']
+                    )
+
+        except Exception as err:
+            satsuki.verboseprint("Verbosity problem:", err)
+            pass
+
+
     def __init__(self, *args, **kwargs):
         """Instantiation"""
 
@@ -332,31 +382,7 @@ class Arguments(object):
         elif self.internal_command == Arguments._COMMAND_UPDATE:
             self._init_data()
 
-        # verbosity
-        satsuki.verboseprint("Arguments:")
-        satsuki.verboseprint("user command:",self.user_command)
-        satsuki.verboseprint("internal command:",self.internal_command)
-        satsuki.verboseprint("slug:",self.slug)
-        satsuki.verboseprint("rel_name:",self.rel_name)
-        satsuki.verboseprint("latest:",self.latest)
-        satsuki.verboseprint("body:",self.body)
-        satsuki.verboseprint("pre:",self.pre)
-        satsuki.verboseprint("draft:",self.draft)
-        satsuki.verboseprint("tag:",self.tag)
-        satsuki.verboseprint("target_commitish:",self.target_commitish)
-
-        satsuki.verboseprint("# files:", len(self.file_info))
-
-        if self.file_info is not None:
-            for info in self.file_info:
-                satsuki.verboseprint(
-                    "file:",
-                    info['filename'],
-                    "label:",
-                    info['label'],
-                    "mime:",
-                    info['mime-type']
-                )
+        self._verbosity()
 
         assert isinstance(self.internal_command, str), \
             "No internal command, user command: " + self.user_command
@@ -400,7 +426,7 @@ class ReleaseMgr(object):
             draft=self.args.draft,
             prerelease=self.args.pre,
             target_commitish=self.args.target_commitish
-        )
+        )    
 
     def _update_release(self):
         satsuki.verboseprint("Updating release, id:",self.args.working_release.id)
@@ -414,44 +440,55 @@ class ReleaseMgr(object):
             prerelease=self.args.pre
         )
 
-        # in order to upsert...
-        # 1. is it update or create?
-        #   - figure this out by looking for the release by tag
-        #   - Must handle:
-        #     - No tag / no release     ==> Create Tag      Create Release                          Upload Files
-        #     - Yes tag / no release    ==>                 Create Release                          Upload Files
-        #     - Yes tag / yes release   ==>                                     Update Release      Upload Files
-        # 2. Create Tag
-        #   - need to create the tag (requiring commit sha******)
-        #     http://pygithub.readthedocs.io/en/latest/github_objects/Repository.html#github.Repository.Repository.create_git_tag
-        # 3. Create Release
-        #   - need to create the release (requiring tag)
-        #     http://pygithub.readthedocs.io/en/latest/github_objects/Repository.html#github.Repository.Repository.create_git_release
-        # 4. Update Release
-        #   - release methods not documented so...
-        #     https://github.com/PyGithub/PyGithub/blob/566b28d3fa0db4a89de830dc25fbbbfe6a56865f/github/GitRelease.py#L167
-        # 5. Upload File(s) if any
-        #   - release.upload_asset()
-        #     https://github.com/PyGithub/PyGithub/blob/a519e4675a911a3f20f1ad197cbbbb14bdd1842d/github/GitRelease.py#L186
-        #   - update release asset (only name & label, not the file itself)
-        #     http://pygithub.readthedocs.io/en/latest/github_objects/GitReleaseAsset.html#github.GitReleaseAsset.GitReleaseAsset.update_asset
+    def _upload_files(self):
+        for info in self.args.file_info:
+            # path, label="", content_type=""
+            self.args.working_release.upload_asset(
+                info['path'],
+                info['label'],
+                info['mime-type'],
+            )
 
     def _delete_file(self):
         satsuki.verboseprint("Deleting release asset:",self.args.tag)
+        raise NotImplementedError
 
     def _delete_release(self):
         satsuki.verboseprint("Deleting release:",self.args.tag)
-        # 1. Is it delete release or delete asset?
-        #   - If file(s) included, always a delete asset, even if they don't exist
-        #   - Must handle:
-        #     - No file info / Release info (good)            ==> Delete release          No error
-        #     - File info (bad) / Release info (good)         ==> Nothing (message)       No error (For replace functionality)
-        #     - File info (good) / Release info (good)        ==> Delete file             No error
-        #     - Release info (bad)                            ==> Nothing                 ERROR
-        # 2. Delete release asset
-        # http://pygithub.readthedocs.io/en/latest/github_objects/GitReleaseAsset.html#github.GitReleaseAsset.GitReleaseAsset.delete_asset
-        # 3. Delete release
-         # https://github.com/PyGithub/PyGithub/blob/a519e4675a911a3f20f1ad197cbbbb14bdd1842d/github/GitRelease.py#L160
+
+        # delete release
+        self.args.working_release.delete_release()
+
+        if self.args.include_tag:
+
+            # delete the local tag (if any)
+            satsuki.verboseprint("Deleting local tag")
+            try:
+                subprocess.run([
+                        'git',
+                        'tag',
+                        '--delete',
+                        self.args.tag
+                    ],
+                    check=True
+                )
+            except Exception as err:
+                satsuki.verboseprint("Trouble deleting local tag:",err)
+
+            # delete the remote tag (if any)
+            satsuki.verboseprint("Deleting remote tag")
+            try:
+                subprocess.run([
+                        'git',
+                        'push',
+                        '--delete',
+                        'origin',
+                        self.args.tag
+                    ],
+                    check=True
+                )
+            except Exception as err:
+                satsuki.verboseprint("Trouble deleting remote tag:",err)
 
     def execute(self):
         if self.args.internal_command == Arguments._COMMAND_DELETE_FILE:
@@ -460,8 +497,10 @@ class ReleaseMgr(object):
             self._delete_release()
         elif self.args.internal_command == Arguments._COMMAND_INSERT:
             self._create_release()
+            self._upload_files()
         elif self.args.internal_command == Arguments._COMMAND_UPDATE:
             self._update_release()
+            self._upload_files()
 
         return True
 

@@ -56,6 +56,12 @@ click.disable_unicode_literals_warning = True
     default=None, help='[Required] Either the tag name OR the '
     + '--latest option must be provided. If both are used, tag name '
     + 'takes precedence.')
+@click.option('--include-tag', 'include_tag', envvar='SATS_INCLUDE_TAG', 
+    is_flag=True, default=False, help='Whether to delete the tag when '
+    + 'deleting the '
+    + 'release. CAUTION: This may lead to race conditions with Travis CI '
+    + 'and/or AppVeyor '
+    + 'when running the Satsuki test suite.')    
 @click.option('--commitish', 'commitish', envvar='SATS_COMMITISH',
     default=None, help='**[Required]** Can be any branch or commit '
     + 'SHA. Unused '
