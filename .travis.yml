@@ -12,10 +12,11 @@ script:
   - env
   - pytest --token $SATS_TOKEN
 before_deploy:
-  - SATS_DO_DEPLOY=yes
+  - export SATS_DO_DEPLOY=yes
   - |
-    if [[ $TRAVIS_TAG == Test-* ]]; then
-      SATS_DO_DEPLOY=no
+    if [[ $TRAVIS_TAG == Test* ]]; then
+      echo "No deployment because Test tag"
+      export SATS_DO_DEPLOY=no
     fi
   - |
     if [ "$TRAVIS_BRANCH" = "dev" ]; then
@@ -37,7 +38,7 @@ deploy:
       branch: dev
       repo: YakDriver/satsuki
       python: "3.6"
-      condition: $SATS_DO_DEPLOY = yes
+      condition: $SATS_DO_DEPLOY=yes
   - provider: releases
     name: $RELEASE_VERSION
     tag_name: $RELEASE_VERSION
@@ -51,7 +52,7 @@ deploy:
       branch: master
       repo: YakDriver/satsuki
       python: "3.6"
-      condition: $SATS_DO_DEPLOY = yes
+      condition: $SATS_DO_DEPLOY=yes
   - provider: pypi
     distributions: sdist bdist_wheel
     user: YakDriver
@@ -62,4 +63,4 @@ deploy:
       tags: true
       repo: YakDriver/satsuki
       python: "3.6"
-      condition: $SATS_DO_DEPLOY = yes
+      condition: $SATS_DO_DEPLOY=yes
