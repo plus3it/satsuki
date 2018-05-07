@@ -1,7 +1,7 @@
 language: python
 sudo: false
 python:
-  #- "3.5"
+  - "3.5"
   - "3.6"
 env:
   global:
@@ -65,6 +65,7 @@ deploy:
     password:
       secure: jnXWuNMooLvNezR9juAZw/9yVuazxCsdBK1eHCABcTBni6PsFwmTUGFyuz0gC4CCagf4RAvd8D6dt0I0KUnaL37FMlMsxcLbjY9wcsT2DitTYTLaPcyIUylXPJpobaqcjNqAksquS6R0w13xN5sXuJLKqzalaNNfwts6x4S41xbbj1gtpUifAugHT94CQVf4apMrUOSyvcqfijo6wv4Kp0VyX9X1rPqkQEsMgdLeOeZAEBYe9aJUV5r9t6C0BDhKKySus5j8kZuNt5xjTsN8/4VMJapKhMW6xjiRui4a1c34D+g/q53fvvA+O3Behh/jdPRK8fRyVVfLACzx65eYFnuN92yDUn4IiQlL/wBKQWX4Zh8qcevXYTqh8tYsyoenWuBxhJQQXdACoFUk4t89onFy1BCvNEjGKcPesZcU7LOZwvSBoyI2Sik6xLLjINgCVrcxgVEZs72DWiY0aVDEzHasLzdRiY4mWp4KBi4AsElfVa2ARLUCKZMZu7amSOYumfOttGljGX5/woW7eHKt8gKbwBGRWGPpMq/qOOivOTgV20eXX/DO4NwreMGLmlThsVQtxYZYTlUdYiKR6Px1Z+ZrNNu+cK2eIKaA32i5ksZqI9sN4nY34Mu323qMvHnzq1TcQKy58ers3rf0NTGSFwoYhOKVVL1jHGde69tBPzo=
     skip_upload_docs: true
+    skip_cleanup: true
     on:
       tags: true
       repo: YakDriver/satsuki
