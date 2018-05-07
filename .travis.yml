@@ -12,13 +12,17 @@ script:
   - env
   - pytest --token $SATS_TOKEN
 before_deploy:
+  - SATS_DO_DEPLOY=yes
+  - |
+    if [[ $TRAVIS_TAG == Test-* ]]; then
+      SATS_DO_DEPLOY=no
+    fi
   - |
     if [ "$TRAVIS_BRANCH" = "dev" ]; then
       sed -i -E "s/^(version = )(.*)/\1\2.$TRAVIS_BUILD_NUMBER/" $TRAVIS_BUILD_DIR/setup.cfg
     elif [ "$TRAVIS_BRANCH" = "master" ]; then
       export RELEASE_VERSION=$(grep "version = " $TRAVIS_BUILD_DIR/setup.cfg | sed "s/version = //")
       export RELEASE_BODY="* [satsuki v$RELEASE_VERSION CHANGELOG](https://github.com/YakDriver/satsuki/blob/$RELEASE_VERSION/CHANGELOG.rst)"
-      (set -x; git tag -a $RELEASE_VERSION -m $RELEASE_VERSION)
     fi
 deploy:
   - provider: pypi
@@ -33,6 +37,7 @@ deploy:
       branch: dev
       repo: YakDriver/satsuki
       python: "3.6"
+      condition: $SATS_DO_DEPLOY = yes
   - provider: releases
     name: $RELEASE_VERSION
     tag_name: $RELEASE_VERSION
@@ -46,6 +51,7 @@ deploy:
       branch: master
       repo: YakDriver/satsuki
       python: "3.6"
+      condition: $SATS_DO_DEPLOY = yes
   - provider: pypi
     distributions: sdist bdist_wheel
     user: YakDriver
@@ -56,3 +62,4 @@ deploy:
       tags: true
       repo: YakDriver/satsuki
       python: "3.6"
+      condition: $SATS_DO_DEPLOY = yes
