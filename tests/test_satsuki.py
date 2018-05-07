@@ -1,52 +1,88 @@
 # test_pyppyn.py
 
 import pytest
-import distutils
+import uuid
+import os
 
-from satsuki import ConfigRep
+from satsuki import Arguments, ReleaseMgr
+
+TEST_VERBOSE = True
+TEST_BODY = str(uuid.uuid1())
+TEST_SLUG = "YakDriver/satsuki"
+TEST_TAG = "Test-v" + TEST_BODY[:6]
+TEST_REL_NAME = "Test Release v" + TEST_BODY[:6]
+TEST_COMMITISH = "dd3f3843d9c691b22bd2961d5958233f3b45552f"
+TEST_FILENAME = 'tests/release-asset.exe'
+
+def test_blank_arguments():
+    """ Returns an Arguments instance with nothing set. """
+    with pytest.raises(PermissionError):
+        Arguments()
 
 @pytest.fixture
-def bad_configrep():
-    """Returns a ConfigRep instance with a bad config file"""
-    return ConfigRep(setup_file="doesnotexistfile")
+def arguments_base(token):
+    """ Basic arguments with authorization (must provide token) """
+    return Arguments(
+        verbose = TEST_VERBOSE,
+        token = token,
+        slug = TEST_SLUG,
+        tag = TEST_TAG,
+        body = TEST_BODY,
+        rel_name = TEST_REL_NAME,
+        commitish = TEST_COMMITISH
+    )
 
-def test_non_existing_config(bad_configrep):
-    """ Gives an error when no/invalid setup file is provided. """
-    with pytest.raises(distutils.errors.DistutilsFileError):
-        bad_configrep.read_config()
+def test_create_release(arguments_base):
+    rm = ReleaseMgr(arguments_base)
+    if rm.execute(): # <== should create
+        compare_args = Arguments(
+            verbose = TEST_VERBOSE,
+            token = arguments_base.api_token,
+            slug = TEST_SLUG,
+            tag = TEST_TAG
+        )
 
-@pytest.fixture
-def configrep():
-    """Returns a ConfigRep instance using the included test.cfg file"""
-    return ConfigRep(setup_file="tests/test.cfg",verbose=True)
+    assert compare_args.body == TEST_BODY \
+        and compare_args.rel_name == TEST_REL_NAME
 
-def test_read_cfg_file(configrep):
-    """ Tests reading the config file. """
-    assert configrep.read_config()
+def test_get_latest(arguments_base):
+    rm = ReleaseMgr(arguments_base)
+    if rm.execute(): # <== should create
+        compare_args = Arguments(
+            verbose = TEST_VERBOSE,
+            token = arguments_base.api_token,
+            slug = TEST_SLUG,
+            latest = True
+        )
 
-def test_load_cfg_file(configrep):
-    """ Tests load the config file. """
-    configrep.read_config()
-    assert configrep.load_config()
+    assert compare_args.tag == TEST_TAG \
+        and compare_args.body == TEST_BODY \
+        and compare_args.rel_name == TEST_REL_NAME
 
-def test_install_packages(configrep):
-    """ Tests installing the indicated packages. """
-    configrep.read_config()
-    configrep.load_config()
-    assert configrep.install_packages()
+def test_upload_file(token):
+    with open(TEST_FILENAME, 'wb') as fout:
+        fout.write(os.urandom(1024000))
 
-def test_process_config(configrep):
-    """ Tests installing the indicated packages. """
-    assert configrep.process_config()
+    args = Arguments(
+        verbose = TEST_VERBOSE,
+        token = token,
+        slug = TEST_SLUG,
+        tag = TEST_TAG,
+        file_file = "tests/test.file"
+    )
 
-def test_get_required(configrep):
-    """ Tests getting list of requirements. """
-    assert set(configrep.get_required()) == set(['backoff', 'click', 'six', 'pyyaml']) 
+    ul_rel = ReleaseMgr(args)
+    assert ul_rel.execute()
+    
+def test_delete_release(arguments_base):
 
-def test_install_and_import():
-    """ Tests the class method. """
-    assert ConfigRep.install_and_import("pyyaml") == "yaml"
+    delete_args = Arguments(
+        verbose = TEST_VERBOSE,
+        token = arguments_base.api_token,
+        slug = TEST_SLUG,
+        tag = TEST_TAG,
+        command = Arguments.COMMAND_DELETE
+    )
 
-def test_package_to_module():
-    """ Tests the class method. """
-    assert ConfigRep.package_to_module("pyyaml") == "yaml"    
+    del_rel = ReleaseMgr(delete_args)
+    assert del_rel.execute()

@@ -1,0 +1,8 @@
+[
+  {
+    "filename": "release-asset.exe",
+    "path": "./tests/release-asset.exe",
+    "mime-type": "application/x-executable",
+    "label": "Test asset to upload with random bytes"
+  }
+]
