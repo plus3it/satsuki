@@ -11,7 +11,7 @@ TEST_BODY = str(uuid.uuid1())
 TEST_SLUG = "YakDriver/satsuki"
 TEST_TAG = "Test-v" + TEST_BODY[:6]
 TEST_REL_NAME = "Test Release v" + TEST_BODY[:6]
-TEST_COMMITISH = "dd3f3843d9c691b22bd2961d5958233f3b45552f"
+TEST_COMMITISH = "5aacf6b744ec379afafbf3bac2131474a464ee9d"
 TEST_FILENAME = 'tests/release-asset.exe'
 
 def test_blank_arguments():
