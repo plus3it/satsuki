@@ -22,7 +22,7 @@ script:
   - |
     if [ "$SATS_DO_DEPLOY" = "yes" ]; then
       pytest --token $SATS_TOKEN
-    fi  
+    fi
 before_deploy:
   - |
     if [ "$TRAVIS_BRANCH" = "dev" ]; then
