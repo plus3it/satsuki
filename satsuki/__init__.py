@@ -21,6 +21,7 @@ import satsuki
 import json
 import glob
 import subprocess
+import fnmatch
 
 __version__ = "0.1.2"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
@@ -87,6 +88,7 @@ class Arguments(object):
     _COMMAND_UPDATE = "i_update"
     _COMMAND_DELETE_FILE = "i_delete_file"
     _COMMAND_DELETE_REL = "i_delete_rel"
+    _COMMAND_DELETE_TAG = "i_delete_tag"
 
     PER_PAGE = 10
 
@@ -207,10 +209,7 @@ class Arguments(object):
                 self.internal_command = Arguments._COMMAND_DELETE_REL
         else:
             if self.user_command == Arguments.COMMAND_DELETE:
-                satsuki.error(
-                    "No release found to delete",
-                    ReferenceError
-                )
+                self.internal_command = Arguments._COMMAND_DELETE_TAG
             else:
                 self.internal_command = Arguments._COMMAND_INSERT
 
@@ -459,42 +458,57 @@ class ReleaseMgr(object):
         # delete release
         self.args.working_release.delete_release()
 
+    def _delete_tag(self):    
+
         if self.args.include_tag:
+            satsuki.verboseprint("Cleaning tag(s):",self.args.tag)
 
-            # delete the local tag (if any)
-            satsuki.verboseprint("Deleting local tag")
-            try:
-                subprocess.run([
-                        'git',
-                        'tag',
-                        '--delete',
-                        self.args.tag
-                    ],
-                    check=True
-                )
-            except Exception as err:
-                satsuki.verboseprint("Trouble deleting local tag:",err)
+            tag_list = self.args.repo.get_tags()
+            for tag in tag_list:
+                if fnmatch.fnmatch(tag.name, self.args.tag):
+                    try:
+                        self.args.repo.get_release(tag.name)
+                        satsuki.verboseprint("Tag still connected to "
+                            + "release - not deleting:", tag.name)
+                    except Exception:
+                        # No release exists, get rid of tag
+                        # delete the local tag (if any)
+                        satsuki.verboseprint("Deleting local tag:", tag.name)
+                        try:
+                            subprocess.run([
+                                    'git',
+                                    'tag',
+                                    '--delete',
+                                    tag.name
+                                ],
+                                check=True
+                            )
+                        except Exception as err:
+                            satsuki.verboseprint("Trouble deleting local tag:",err)
 
-            # delete the remote tag (if any)
-            satsuki.verboseprint("Deleting remote tag")
-            try:
-                subprocess.run([
-                        'git',
-                        'push',
-                        '--delete',
-                        'origin',
-                        self.args.tag
-                    ],
-                    check=True
-                )
-            except Exception as err:
-                satsuki.verboseprint("Trouble deleting remote tag:",err)
+                        # delete the remote tag (if any)
+                        satsuki.verboseprint("Deleting remote tag:", tag.name)
+                        try:
+                            subprocess.run([
+                                    'git',
+                                    'push',
+                                    '--delete',
+                                    'origin',
+                                    tag.name
+                                ],
+                                check=True
+                            )
+                        except Exception as err:
+                            satsuki.verboseprint("Trouble deleting remote tag:",err)                  
 
     def execute(self):
         if self.args.internal_command == Arguments._COMMAND_DELETE_FILE:
             self._delete_file()
         elif self.args.internal_command == Arguments._COMMAND_DELETE_REL:
             self._delete_release()
+            self._delete_tag()
+        elif self.args.internal_command == Arguments._COMMAND_DELETE_TAG:
+            self._delete_tag()
         elif self.args.internal_command == Arguments._COMMAND_INSERT:
             self._create_release()
             self._upload_files()

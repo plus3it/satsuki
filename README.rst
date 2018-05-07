@@ -209,7 +209,26 @@ SATS_COMMITISH    --commitish       Can be any branch or commit SHA. Unused
                                     Travis CI or APPVEYOR_REPO_COMMIT from
                                     AppVeyor, if any. If none is provided,
                                     GitHub will default to the default branch.*
+SATS_INCLUDE_TAG  --include-tag     Whether to delete the tag when deleting the
+                                    release. If the provided tag does not match
+                                    a release, the tag will be deleted. If the
+                                    tag includes a POSIX-style filename pattern
+                                    match, all tags which aren't associated
+                                    with releases will be deleted. This is
+                                    handy for cleaning up tags. If you have
+                                    many tags to cleanup, you may need to run
+                                    this multiple times to complete the
+                                    cleaning. *Default: Not*
 ================  ===============   ==========================================
+
+Here is an example of using Satsuki to clean up tags. To be able to clean tags,
+Satsuki must be run from the ``git`` directory of the repo.
+
+.. code-block:: bash
+
+    $ cd coolproject
+    $ satsuki --slug "Owner/coolproject" --token <YOUR_GITHUB_OATH_TOKEN> \
+    --tag Test-* --command delete -v --include-tag
 
 
 Asset Related
