@@ -34,7 +34,7 @@ def arguments_base(token):
 
 def test_create_release(arguments_base):
     rm = ReleaseMgr(arguments_base)
-    if rm.execute(): # <== should create
+    if rm.execute() == os.EX_OK: # <== should create
         compare_args = Arguments(
             verbose = TEST_VERBOSE,
             token = arguments_base.api_token,
@@ -47,7 +47,7 @@ def test_create_release(arguments_base):
 
 def test_get_latest(arguments_base):
     rm = ReleaseMgr(arguments_base)
-    if rm.execute(): # <== should create
+    if rm.execute() == os.EX_OK: # <== should create
         compare_args = Arguments(
             verbose = TEST_VERBOSE,
             token = arguments_base.api_token,
@@ -76,7 +76,7 @@ def test_upload_file(token):
     )
 
     ul_rel = ReleaseMgr(args)
-    assert ul_rel.execute()
+    assert ul_rel.execute() == os.EX_OK
     
 def test_delete_release(token):
 
@@ -90,4 +90,4 @@ def test_delete_release(token):
     )
 
     del_rel = ReleaseMgr(delete_args)
-    assert del_rel.execute()
+    assert del_rel.execute() == os.EX_OK

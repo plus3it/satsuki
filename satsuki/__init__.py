@@ -23,7 +23,7 @@ import glob
 import subprocess
 import fnmatch
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
 
 verbose = False
@@ -516,5 +516,5 @@ class ReleaseMgr(object):
             self._update_release()
             self._upload_files()
 
-        return True
+        return os.EX_OK
 
