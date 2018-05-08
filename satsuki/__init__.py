@@ -23,7 +23,7 @@ import glob
 import subprocess
 import fnmatch
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
 
 verbose = False
