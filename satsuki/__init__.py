@@ -25,6 +25,7 @@ import fnmatch
 
 __version__ = "0.1.4"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
+EXIT_OK = 0
 
 verbose = False
 pyppy = None
@@ -35,7 +36,6 @@ verboseprint = lambda *a, **k: \
 def error(message, exception):
     print(satsuki.VERB_MESSAGE_PREFIX, "[ERROR]", message)
     raise exception
-
 
 class Arguments(object):
     """
@@ -442,6 +442,7 @@ class ReleaseMgr(object):
     def _upload_files(self):
         for info in self.args.file_info:
             # path, label="", content_type=""
+            satsuki.verboseprint("Upload file:",info['filename'])
             self.args.working_release.upload_asset(
                 info['path'],
                 info['label'],
@@ -515,6 +516,4 @@ class ReleaseMgr(object):
         elif self.args.internal_command == Arguments._COMMAND_UPDATE:
             self._update_release()
             self._upload_files()
-
-        return os.EX_OK
 
