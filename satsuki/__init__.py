@@ -516,5 +516,5 @@ class ReleaseMgr(object):
             self._update_release()
             self._upload_files()
 
-        return True
+        return os.EX_OK
 
