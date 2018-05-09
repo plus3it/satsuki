@@ -465,6 +465,21 @@ class ReleaseMgr(object):
                         or release_asset.size != complete_filesize:
                         raise ConnectionError
 
+                except IOError as err:
+                    if str(err) == "[Errno 32] Broke pipe":
+                        # may not be an error
+
+                        asset_list = self.args.working_release.get_assets()
+                        for check_asset in asset_list:
+                            if check_asset.id == release_asset.id \
+                                and check_asset.size == release_asset.size:
+                                satsuki.verboseprint(
+                                    "Upload okay, sizes:", 
+                                    release_asset.size, 
+                                    ",",
+                                    check_asset.size
+                                )
+
                 except Exception as err:
                     satsuki.verboseprint(
                         "Upload FAILED, remaining attempts:",
