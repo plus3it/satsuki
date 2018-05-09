@@ -26,6 +26,7 @@ import fnmatch
 __version__ = "0.1.4"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
 EXIT_OK = 0
+MAX_UPLOAD_ATTEMPTS = 3
 
 verbose = False
 pyppy = None
@@ -443,11 +444,40 @@ class ReleaseMgr(object):
         for info in self.args.file_info:
             # path, label="", content_type=""
             satsuki.verboseprint("Upload file:",info['filename'])
-            self.args.working_release.upload_asset(
-                info['path'],
-                info['label'],
-                info['mime-type'],
-            )
+            complete_filesize = os.path.getsize(info['path'])
+            satsuki.verboseprint("Size:", complete_filesize)
+            attempts = 0
+            release_asset = None
+            while attempts < satsuki.MAX_UPLOAD_ATTEMPTS:
+                try:
+                    attempts += 1
+                    release_asset = self.args.working_release.upload_asset(
+                        info['path'],
+                        label=info['label'],
+                        content_type=info['mime-type'],
+                    )
+
+                    # not sure if this will be accurate size, need to check
+                    if not hasattr(release_asset, 'size') \
+                        or release_asset.size != complete_filesize:
+                        raise ConnectionError
+
+                except Exception as err:
+                    satsuki.verboseprint(
+                        "Upload FAILED, remaining attempts:",
+                        satsuki.MAX_UPLOAD_ATTEMPTS - attempts,
+                        "Error:",
+                        err
+                    )
+
+                    if release_asset is not None:
+                        if hasattr(release_asset, 'state'):
+                            satsuki.verboseprint("State:",release_asset.state)
+
+                        # release_asset.delete_asset() # throwing exception...
+
+                    if attempts > satsuki.MAX_UPLOAD_ATTEMPTS:
+                        raise err
 
     def _delete_file(self):
         satsuki.verboseprint("Deleting release asset:",self.args.tag)
