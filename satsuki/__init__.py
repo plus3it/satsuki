@@ -481,6 +481,7 @@ class ReleaseMgr(object):
                                 )
 
                 except Exception as err:
+                    satsuki.verboseprint("Exception type:",type(err))
                     satsuki.verboseprint(
                         "Upload FAILED, remaining attempts:",
                         satsuki.MAX_UPLOAD_ATTEMPTS - attempts,
