@@ -445,7 +445,7 @@ class ReleaseMgr(object):
             # path, label="", content_type=""
             satsuki.verboseprint("Upload file:",info['filename'])
             complete_filesize = os.path.getsize(info['path'])
-            satsuki.verboseprint("Size:", complete_filesize)
+            satsuki.verboseprint("File size on disk:", complete_filesize)
             attempts = 0
             release_asset = None
             while attempts < satsuki.MAX_UPLOAD_ATTEMPTS:
@@ -456,6 +456,9 @@ class ReleaseMgr(object):
                         label=info['label'],
                         content_type=info['mime-type'],
                     )
+
+                    if hasattr(release_asset, 'size'):
+                        satsuki.verboseprint("Asset size:", release_asset.size)
 
                     # not sure if this will be accurate size, need to check
                     if not hasattr(release_asset, 'size') \
