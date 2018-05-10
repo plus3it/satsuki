@@ -233,7 +233,8 @@ class Arguments(object):
 
         # handle the file_file
         # todo: validate JSON
-        if os.path.isfile(self.file_file):
+        if not self.file_file is None \
+            and os.path.isfile(self.file_file):
             file_file = open(self.file_file, "r")
             self.file_info = json.loads(file_file.read())
             file_file.close()
@@ -449,19 +450,42 @@ class ReleaseMgr(object):
                 sha256.update(chunk)
         return sha256.hexdigest()
 
-    def _delete_release_asset(self, filename):
+    def _find_release_asset(self, id):
 
-        satsuki.verboseprint("Deleting release asset (if exists):", filename)
-        
-        # populate asset list
+        satsuki.verboseprint("Finding asset:", id)
+
+        # get asset list is not done already
         if not isinstance(self.args._asset_list, list):
             self.args._asset_list = self.args.working_release.get_assets()
 
-        for check_asset in self.args._asset_list:
-            satsuki.verboseprint("Comparing asset:", check_asset.name)
-            if check_asset.name == filename:
-                satsuki.verboseprint("Deleting asset:", filename)
-                check_asset.delete_asset()
+        if isinstance(id, str):
+
+            # find by filename
+            filename = id
+            for check_asset in self.args._asset_list:
+                if check_asset.name == filename:
+                    satsuki.verboseprint("Found asset:", filename)
+                    return check_asset
+
+        elif isinstance(id, int):
+
+            for check_asset in self.args._asset_list:
+                if check_asset.id == id:
+                    satsuki.verboseprint("Found asset:", id)
+                    return check_asset
+
+        else:
+
+            return None
+
+
+    def _delete_release_asset(self, filename):
+
+        satsuki.verboseprint("Deleting release asset (if exists):", filename)
+        delete_asset = self._find_release_asset(filename)
+
+        if delete_asset is not None:
+            delete_asset.delete_asset()
 
     def _upload_files(self):
         for info in self.args.file_info:
@@ -480,10 +504,20 @@ class ReleaseMgr(object):
             while attempts < satsuki.MAX_UPLOAD_ATTEMPTS:
                 try:
                     attempts += 1
+
+                    upload_args = {}
+                    if info['label'] is None:
+                        upload_args['label'] = info['filename']
+                    else:
+                        upload_args['label'] = info['label']
+                    upload_args['label'] += "   (SHA256: " + filehash + ")"
+
+                    if info['mime-type'] is not None:
+                        upload_args['mime-type'] = info['mime-type']
+
                     release_asset = self.args.working_release.upload_asset(
                         info['path'],
-                        label=info['label'] + " SHA256: " + filehash,
-                        content_type=info['mime-type'],
+                        **upload_args
                     )
 
                     if hasattr(release_asset, 'size'):
@@ -496,18 +530,18 @@ class ReleaseMgr(object):
 
                 except IOError as err:
                     if str(err) == "[Errno 32] Broke pipe":
-                        # may not be an error
+                        
+                        # may not be an error - check API for file
+                        asset = self._find_release_asset(release_asset.id)
 
-                        asset_list = self.args.working_release.get_assets()
-                        for check_asset in asset_list:
-                            if check_asset.id == release_asset.id \
-                                and check_asset.size == release_asset.size:
-                                satsuki.verboseprint(
-                                    "Upload okay, sizes:", 
-                                    release_asset.size, 
-                                    ",",
-                                    check_asset.size
-                                )
+                        if asset is not None \
+                            and asset.size == release_asset.size:
+                            satsuki.verboseprint(
+                                "Upload okay, sizes:", 
+                                release_asset.size, 
+                                ",",
+                                asset.size
+                            )
 
                 except Exception as err:
                     if hasattr(release_asset, 'size'):
