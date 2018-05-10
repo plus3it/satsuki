@@ -285,3 +285,7 @@ This is an example of the format.
       'mime-type': 'application/x-executable',
       'path': '/path/to/file/gbtestapp-4.2.6-standalone-osx-x86_64'}]
 
+The First Confirmed Upload SHA
+------------------------------
+
+``25c2f15b0c332bf58d5e625f54525873bcddc2083578b335fdc4a1be8d79edda``

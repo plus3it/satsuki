@@ -151,6 +151,8 @@ class Arguments(object):
             satsuki.verboseprint('Title: ', self.working_release.title)
             satsuki.verboseprint('URL: ', self.working_release.url)
 
+            self._asset_list = None
+
             return True
 
         except github.GithubException:
@@ -448,8 +450,23 @@ class ReleaseMgr(object):
                 sha256.update(chunk)
         return sha256.hexdigest()
 
+    def _delete_release_asset(self, filename):
+        
+        # populate asset list
+        if not isinstance(self._asset_list, list):
+            self._asset_list = self.args.working_release.get_assets()
+
+        for check_asset in self._asset_list:
+            if check_asset.name == filename:
+                satsuki.verboseprint("Deleting asset:", filename)
+                check_asset.delete_asset()
+
     def _upload_files(self):
         for info in self.args.file_info:
+            
+            # no way to update uploaded file, so delete->upload
+            self._delete_release_asset(info['filename'])
+
             # path, label="", content_type=""
             satsuki.verboseprint("Upload file:",info['filename'])
             complete_filesize = os.path.getsize(info['path'])
