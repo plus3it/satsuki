@@ -450,12 +450,15 @@ class ReleaseMgr(object):
         return sha256.hexdigest()
 
     def _delete_release_asset(self, filename):
+
+        satsuki.verboseprint("Deleting release asset (if exists):", filename)
         
         # populate asset list
         if not isinstance(self.args._asset_list, list):
             self.args._asset_list = self.args.working_release.get_assets()
 
         for check_asset in self.args._asset_list:
+            satsuki.verboseprint("Comparing asset:", check_asset.name)
             if check_asset.name == filename:
                 satsuki.verboseprint("Deleting asset:", filename)
                 check_asset.delete_asset()
