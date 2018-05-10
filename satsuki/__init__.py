@@ -24,7 +24,7 @@ import subprocess
 import fnmatch
 import hashlib
 
-__version__ = "0.1.5"
+__version__ = "0.1.6"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
 EXIT_OK = 0
 MAX_UPLOAD_ATTEMPTS = 3
@@ -95,6 +95,7 @@ class Arguments(object):
     PER_PAGE = 10
 
     def _init_basic(self):
+
         # auth - required
         self.api_token = self.kwargs.get('token',None)
         if self.api_token is None:
@@ -103,6 +104,20 @@ class Arguments(object):
                 + "environment variable.",
                 PermissionError
             )
+
+        # user command
+        if not self.kwargs.get('command',False):
+            self.user_command = Arguments.COMMAND_UPSERT
+        elif self.kwargs.get('command') == Arguments.COMMAND_UPSERT or \
+            self.kwargs.get('command') == Arguments.COMMAND_DELETE:
+            self.user_command = self.kwargs.get('command')
+        else:
+            satsuki.error(
+                "Invalid command:" + self.kwargs.get('command'),
+                AttributeError
+            )            
+
+        self.force = self.kwargs.get('force',False)
 
         # slug or repo / user - required
         self.slug = self.kwargs.get(
@@ -186,19 +201,7 @@ class Arguments(object):
 
         self.include_tag = self.kwargs.get('include_tag', False)
 
-    def _init_command(self):
-
-        # user command
-        if not self.kwargs.get('command',False):
-            self.user_command = Arguments.COMMAND_UPSERT
-        elif self.kwargs.get('command') == Arguments.COMMAND_UPSERT or \
-            self.kwargs.get('command') == Arguments.COMMAND_DELETE:
-            self.user_command = self.kwargs.get('command')
-        else:
-            satsuki.error(
-                "Invalid command:" + self.kwargs.get('command'),
-                AttributeError
-            )
+    def _init_internal_command(self):
 
         # internal command
         if self._get_release():
@@ -247,6 +250,8 @@ class Arguments(object):
         # about each. if there's one label, it will be applied to all
         # files. same for mimes.
         if len(self.files) > 0:
+
+            satsuki.verboseprint("Processing files:", len(self.files))
             if len(self.files) != len(self.labels) \
                 and len(self.labels) not in [0, 1]:
                 satsuki.error(
@@ -261,11 +266,21 @@ class Arguments(object):
                     AttributeError
                 )
 
-            for i, filename in enumerate(self.files):
-                for one_file in glob.glob(filename):
+            new_files = []
+            if self.user_command == Arguments.COMMAND_UPSERT:
+
+                # glob expand
+                for i, filename in enumerate(self.files):
+                    satsuki.verboseprint("Processing:", filename)
+                    for one_file in glob.glob(filename):
+                        satsuki.verboseprint("Glob result:", one_file)
+                        new_files.append(one_file)
+
+                # setup data structure for each file
+                for i, filename in enumerate(new_files):
                     info = {}
-                    info['filename'] = os.path.basename(one_file)
-                    info['path'] = one_file
+                    info['filename'] = os.path.basename(filename)
+                    info['path'] = filename
                     if len(self.labels) > 0:
                         if len(self.labels) == 1:
                             info['label'] = self.labels[0]
@@ -280,9 +295,24 @@ class Arguments(object):
                         else:
                             info['mime-type'] = self.mimes[i]
                     else:
-                        info['mime-type'] = None
-
+                        info['mime-type'] = None   
+                    
                     self.file_info.append(info)
+
+            elif self.user_command == Arguments.COMMAND_DELETE:
+                for i, filename in enumerate(self.files):
+                    info = {}
+                    info['filename'] = os.path.basename(filename)
+                    info['path'] = filename
+                    info['label'] = None
+                    info['mime-type'] = None    
+                    self.file_info.append(info)
+
+        if len(self.files) > 0 and len(self.file_info) == 0:
+            satsuki.error(
+                "File flag used but no matching files were found",
+                AttributeError
+            )
 
     def _init_data(self):
         # idea here is to not change anything not provided by user
@@ -378,7 +408,7 @@ class Arguments(object):
         self._init_basic()
         self._init_files()
         self._init_tag()
-        self._init_command()
+        self._init_internal_command()
 
         if self.internal_command == Arguments._COMMAND_INSERT:
             self._init_data_blank()
@@ -581,17 +611,29 @@ class ReleaseMgr(object):
 
     def _delete_tag(self):    
 
-        if self.args.include_tag:
+        if self.args.internal_command == Arguments._COMMAND_DELETE_TAG \
+            or self.args.include_tag:
             satsuki.verboseprint("Cleaning tag(s):",self.args.tag)
 
             tag_list = self.args.repo.get_tags()
             for tag in tag_list:
                 if fnmatch.fnmatch(tag.name, self.args.tag):
                     try:
-                        self.args.repo.get_release(tag.name)
-                        satsuki.verboseprint("Tag still connected to "
-                            + "release - not deleting:", tag.name)
-                    except Exception:
+                        release = self.args.repo.get_release(tag.name)
+                        if self.args.force:
+                            satsuki.verboseprint("Deleting release:", release.title)
+                            release.delete_release()
+                            raise github.UnknownObjectException(
+                                "404", 
+                                "Spoof to hit except"
+                            )
+
+                        else:
+                            satsuki.verboseprint("Tag still connected to "
+                                + "release - not deleting:", tag.name)
+
+                    except github.UnknownObjectException as err:
+
                         # No release exists, get rid of tag
                         # delete the local tag (if any)
                         satsuki.verboseprint("Deleting local tag:", tag.name)
