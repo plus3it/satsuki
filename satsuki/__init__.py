@@ -22,6 +22,7 @@ import json
 import glob
 import subprocess
 import fnmatch
+import hashlib
 
 __version__ = "0.1.4"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
@@ -440,12 +441,21 @@ class ReleaseMgr(object):
             prerelease=self.args.pre
         )
 
+    def _get_hash(self, filename):
+        sha256 = hashlib.sha256()
+        with open(filename, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                sha256.update(chunk)
+        return sha256.hexdigest()
+
     def _upload_files(self):
         for info in self.args.file_info:
             # path, label="", content_type=""
             satsuki.verboseprint("Upload file:",info['filename'])
             complete_filesize = os.path.getsize(info['path'])
             satsuki.verboseprint("File size on disk:", complete_filesize)
+            filehash = self._get_hash(info['path'])
+            satsuki.verboseprint("SHA256:", filehash)
             attempts = 0
             release_asset = None
             while attempts < satsuki.MAX_UPLOAD_ATTEMPTS:
@@ -453,7 +463,7 @@ class ReleaseMgr(object):
                     attempts += 1
                     release_asset = self.args.working_release.upload_asset(
                         info['path'],
-                        label=info['label'],
+                        label=info['label'] + " SHA256: " + filehash,
                         content_type=info['mime-type'],
                     )
 
