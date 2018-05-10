@@ -1,6 +1,12 @@
 CHANGE LOG
 ==========
 
+0.1.5 - 2018.05.10
+------------------
+* [BUG FIX] Implemented file (release asset) delete
+* [ENHANCEMENT] Generally improved asset handling including SHA256 sums
+  for files and better error handling
+
 0.1.4 - 2018.05.08
 ------------------
 * [BUG FIX] Looked like an error was occuring because returning True

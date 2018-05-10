@@ -16,7 +16,8 @@ Satsuki
     :alt: Version
 
 
-**Satsuki** is a Python package that helps manage GitHub releases and release assets.
+**Satsuki** (*pronounced SAHT-ski*) is a Python package that helps
+manage GitHub releases and release assets.
 Satsuki is especially useful paired with Continuous Integration/
 Continuous Deployment (CI/CD)
 tools such as `Travis CI <https://travis-ci.org>`_ and `AppVeyor <https://www.appveyor.com>`_.
@@ -284,3 +285,7 @@ This is an example of the format.
       'mime-type': 'application/x-executable',
       'path': '/path/to/file/gbtestapp-4.2.6-standalone-osx-x86_64'}]
 
+The First Confirmed Upload SHA
+------------------------------
+
+``25c2f15b0c332bf58d5e625f54525873bcddc2083578b335fdc4a1be8d79edda``
