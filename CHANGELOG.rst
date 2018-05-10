@@ -1,6 +1,13 @@
 CHANGE LOG
 ==========
 
+0.1.6 - 2018.05.10
+------------------
+* [BUG FIX] Wasn't deleting release asset if file given that didn't
+  exist locally.
+* [ENHANCEMENT] Added --force option to delete tags and releases
+  using pattern matching.
+
 0.1.5 - 2018.05.10
 ------------------
 * [BUG FIX] Implemented file (release asset) delete
