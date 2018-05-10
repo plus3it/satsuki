@@ -481,6 +481,8 @@ class ReleaseMgr(object):
                                 )
 
                 except Exception as err:
+                    if hasattr(release_asset, 'size'):
+                        satsuki.verboseprint("Asset size:", release_asset.size)
                     satsuki.verboseprint("Exception type:",type(err))
                     satsuki.verboseprint(
                         "Upload FAILED, remaining attempts:",

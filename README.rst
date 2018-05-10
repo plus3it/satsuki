@@ -16,7 +16,7 @@ Satsuki
     :alt: Version
 
 
-**Satsuki** (pronounced SAHT-ski) is a Python package that helps
+**Satsuki** (*pronounced SAHT-ski*) is a Python package that helps
 manage GitHub releases and release assets.
 Satsuki is especially useful paired with Continuous Integration/
 Continuous Deployment (CI/CD)
