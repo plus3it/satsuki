@@ -24,7 +24,7 @@ import subprocess
 import fnmatch
 import hashlib
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
 EXIT_OK = 0
 MAX_UPLOAD_ATTEMPTS = 3
