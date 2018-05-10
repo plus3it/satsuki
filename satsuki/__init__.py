@@ -543,6 +543,9 @@ class ReleaseMgr(object):
                                 asset.size
                             )
 
+                    else:
+                        raise err
+
                 except Exception as err:
                     if hasattr(release_asset, 'size'):
                         satsuki.verboseprint("Asset size:", release_asset.size)
@@ -565,7 +568,10 @@ class ReleaseMgr(object):
 
     def _delete_file(self):
         satsuki.verboseprint("Deleting release asset:",self.args.tag)
-        raise NotImplementedError
+        for info in self.args.file_info:
+            asset = self._find_release_asset(info['filename'])
+            if asset is not None:
+                asset.delete_asset()
 
     def _delete_release(self):
         satsuki.verboseprint("Deleting release:",self.args.tag)
