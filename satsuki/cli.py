@@ -52,16 +52,14 @@ click.disable_unicode_literals_warning = True
     + 'release is a draft. Default: Not')
 @click.option('--verbose', '-v', 'verbose', envvar='SATS_VERBOSE',
     is_flag=True, default=False, help='[Flag] Verbose mode')
+@click.option('--force', 'force', envvar='SATS_FORCE', 
+    is_flag=True, default=False, help='Force Satsuki to delete items '
+    + 'when normally it would not. CAUTION: You could easily delete every '
+    + 'release you have with this option.')     
 @click.option('--tag', '-t', 'tag', envvar='SATS_TAG',
     default=None, help='[Required] Either the tag name OR the '
     + '--latest option must be provided. If both are used, tag name '
     + 'takes precedence.')
-@click.option('--include-tag', 'include_tag', envvar='SATS_INCLUDE_TAG', 
-    is_flag=True, default=False, help='Whether to delete the tag when '
-    + 'deleting the '
-    + 'release. CAUTION: This may lead to race conditions with Travis CI '
-    + 'and/or AppVeyor '
-    + 'when running the Satsuki test suite.')    
 @click.option('--commitish', 'commitish', envvar='SATS_COMMITISH',
     default=None, help='**[Required]** Can be any branch or commit '
     + 'SHA. Unused '
@@ -73,6 +71,10 @@ click.disable_unicode_literals_warning = True
     + 'Travis CI or APPVEYOR_REPO_COMMIT from '
     + 'AppVeyor, if any. If none is provided, '
     + 'GitHub will default to the default branch.')
+@click.option('--include-tag', 'include_tag', envvar='SATS_INCLUDE_TAG', 
+    is_flag=True, default=False, help='Whether to delete the tag when '
+    + 'deleting the '
+    + 'release.')         
 @click.option('--file', '-f', 'file', envvar='SATS_FILE', multiple=True,
     default=None, help='File(s) to be uploaded as release asset(s). '
     + 'If the file name contains an asterik (*) it will be treated as '
