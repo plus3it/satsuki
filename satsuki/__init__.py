@@ -233,7 +233,7 @@ class Arguments(object):
         self.file_file = self.kwargs.get('file_file',None)
 
         if len(self.files) == 0 and self.file_file is None:
-            self.file_file = 'gravitybee.file' # for integration with GravityBee
+            self.file_file = 'gravitybee-files.json' # for integration with GravityBee
 
         # handle the file_file
         # todo: validate JSON

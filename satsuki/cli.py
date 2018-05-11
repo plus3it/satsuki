@@ -84,7 +84,7 @@ click.disable_unicode_literals_warning = True
 @click.option('--file-file', 'file_file', envvar='SATS_FILE_FILE',
     default=None, help='File containing name(s) of files to be '
     + 'uploaded.'
-    + 'Default: Looks for gravitybee.file.')
+    + 'Default: Looks for gravitybee-files.json.')
 @click.option('--label', '-l', 'label', envvar='SATS_LABEL', multiple=True,
     default=None, help='Label to display for files instead of the '
     + 'file name. Not recommended with multiple file upload since '

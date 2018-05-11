@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.1.7 - 2018.05.11
+------------------
+* [BUG FIX] Many bug fixes improving compatibility with Windows.
+* [ENHANCEMENT] Use new GravityBee file (``gravitybee-files.json``).
+
 0.1.6 - 2018.05.10
 ------------------
 * [BUG FIX] Wasn't deleting release asset if file given that didn't

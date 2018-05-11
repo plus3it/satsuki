@@ -268,7 +268,7 @@ SATS_FILE_FILE    --file-file       Name of JSON file with information about
                                     file(s) to upload.
                                     See below.
                                     *Default: Will look for*
-                                    ``gravitybee.file``
+                                    ``gravitybee-files.json``
 ================  ===============   ==========================================
 
 
