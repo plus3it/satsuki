@@ -563,10 +563,12 @@ class ReleaseMgr(object):
                         or release_asset.size != complete_filesize:
                         raise ConnectionError
 
-                except (BrokenPipeError, socket.timeout) as err:
+                except (BrokenPipeError, socket.timeout, ConnectionAbortedError) as err:
                     # Errors that potentially don't matter
 
-                    satsuki.verboseprint("Broken pipe (May be okay, verifying...)")
+                    satsuki.verboseprint("Connection error!")
+                    satsuki.verboseprint("This may be an inconsequential error...")
+                    satsuki.verboseprint("Error:", err)
                     
                     if complete_filesize == release_asset.size:
                         satsuki.verboseprint(
