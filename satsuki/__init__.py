@@ -543,7 +543,7 @@ class ReleaseMgr(object):
                     upload_args['label'] += "   (SHA256: " + filehash + ")"
 
                     if info['mime-type'] is not None:
-                        upload_args['mime-type'] = info['mime-type']
+                        upload_args['content_type'] = info['mime-type']
 
                     release_asset = self.args.working_release.upload_asset(
                         info['path'],
