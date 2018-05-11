@@ -25,7 +25,7 @@ import fnmatch
 import hashlib
 import socket
 
-__version__ = "0.1.6"
+__version__ = "0.1.7"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
 EXIT_OK = 0
 MAX_UPLOAD_ATTEMPTS = 3
