@@ -486,6 +486,7 @@ class ReleaseMgr(object):
 
         # get asset list is not done already
         if not isinstance(self.args._asset_list, list):
+            satsuki.verboseprint("Getting asset list")
             self.args._asset_list = self.args.working_release.get_assets()
 
         if isinstance(id, str):
@@ -553,25 +554,25 @@ class ReleaseMgr(object):
                     if hasattr(release_asset, 'size'):
                         satsuki.verboseprint("Asset size:", release_asset.size)
 
+                    if hasattr(release_asset, 'id'):
+                        satsuki.verboseprint("Asset id:", release_asset.id)
+
                     # not sure if this will be accurate size, need to check
                     if not hasattr(release_asset, 'size') \
                         or release_asset.size != complete_filesize:
                         raise ConnectionError
 
-                except IOError as err:
-                    if str(err) == "[Errno 32] Broke pipe":
-                        
-                        # may not be an error - check API for file
-                        asset = self._find_release_asset(release_asset.id)
+                except BrokenPipeError as err:
 
-                        if asset is not None \
-                            and asset.size == release_asset.size:
-                            satsuki.verboseprint(
-                                "Upload okay, sizes:", 
-                                release_asset.size, 
-                                ",",
-                                asset.size
-                            )
+                    satsuki.verboseprint("Broken pipe (May be okay, verifying...)")
+                    
+                    if complete_filesize == release_asset.size:
+                        satsuki.verboseprint(
+                            "Upload okay, sizes:", 
+                            release_asset.size, 
+                            ",",
+                            complete_filesize
+                        )
 
                     else:
                         raise err
