@@ -23,6 +23,7 @@ import glob
 import subprocess
 import fnmatch
 import hashlib
+import socket
 
 __version__ = "0.1.6"
 VERB_MESSAGE_PREFIX = "[Satsuki]"
@@ -562,7 +563,8 @@ class ReleaseMgr(object):
                         or release_asset.size != complete_filesize:
                         raise ConnectionError
 
-                except BrokenPipeError as err:
+                except (BrokenPipeError, socket.timeout) as err:
+                    # Errors that potentially don't matter
 
                     satsuki.verboseprint("Broken pipe (May be okay, verifying...)")
                     
@@ -575,7 +577,8 @@ class ReleaseMgr(object):
                         )
 
                     else:
-                        raise err
+                        if attempts > satsuki.MAX_UPLOAD_ATTEMPTS:
+                            raise err
 
                 except Exception as err:
                     if hasattr(release_asset, 'size'):
