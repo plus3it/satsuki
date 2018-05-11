@@ -533,7 +533,8 @@ class ReleaseMgr(object):
             satsuki.verboseprint("SHA256:", filehash)
             attempts = 0
             release_asset = None
-            while attempts < satsuki.MAX_UPLOAD_ATTEMPTS:
+            success = False
+            while attempts < satsuki.MAX_UPLOAD_ATTEMPTS and not success:
                 try:
                     attempts += 1
 
@@ -559,24 +560,26 @@ class ReleaseMgr(object):
                         satsuki.verboseprint("Asset id:", release_asset.id)
 
                     # not sure if this will be accurate size, need to check
-                    if not hasattr(release_asset, 'size') \
-                        or release_asset.size != complete_filesize:
+                    if hasattr(release_asset, 'size') \
+                        and release_asset.size == complete_filesize:
+                        success = True
+                    else:
                         raise ConnectionError
 
-                except (BrokenPipeError, socket.timeout, ConnectionAbortedError) as err:
+                except (
+                    BrokenPipeError, 
+                    socket.timeout, 
+                    ConnectionAbortedError
+                ) as err:
                     # Errors that potentially don't matter
 
                     satsuki.verboseprint("Connection error!")
                     satsuki.verboseprint("This may be an inconsequential error...")
                     satsuki.verboseprint("Error:", err)
                     
-                    if complete_filesize == release_asset.size:
-                        satsuki.verboseprint(
-                            "Upload okay, sizes:", 
-                            release_asset.size, 
-                            ",",
-                            complete_filesize
-                        )
+                    if hasattr(release_asset, 'size') \
+                        and release_asset.size == complete_filesize:
+                        success = True
 
                     else:
                         if attempts > satsuki.MAX_UPLOAD_ATTEMPTS:
@@ -601,6 +604,9 @@ class ReleaseMgr(object):
 
                     if attempts > satsuki.MAX_UPLOAD_ATTEMPTS:
                         raise err
+
+                if success:
+                    satsuki.verboseprint("Upload successful!")
 
     def _delete_file(self):
         satsuki.verboseprint("Deleting release asset:",self.args.tag)
