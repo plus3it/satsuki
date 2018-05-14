@@ -202,6 +202,13 @@ SATS_TAG          -t, --tag         **[Required]** Either the tag
                                     release ID is provided, and it does not
                                     exist, an error will be thrown to avoid
                                     creating a tag with an ID-like name.
+                                    You can also use two special values to
+                                    base the tag on values from GravityBee
+                                    information: ``gb_appver`` (e.g.,
+                                    ``0.1.8``) or ``gb_v_appver`` (e.g.,
+                                    ``v0.1.8``). The GravityBee info file
+                                    (``gravitybee-info.json``) must be in
+                                    the current directory.
                                     *If not provided,
                                     will default
                                     to the value provided by Travis CI or
@@ -226,15 +233,6 @@ SATS_INCLUDE_TAG  --include-tag     Whether to delete the tag when deleting the
                                     this multiple times to complete the
                                     cleaning. *Default: Not*
 ================  ===============   ==========================================
-
-Here is an example of using Satsuki to clean up tags. To be able to clean tags,
-Satsuki must be run from the ``git`` directory of the repo.
-
-.. code-block:: bash
-
-    $ cd coolproject
-    $ satsuki --slug "Owner/coolproject" --token <YOUR_GITHUB_OATH_TOKEN> \
-    --tag Test-* --command delete -v --include-tag
 
 
 Asset Related
@@ -296,8 +294,10 @@ This is an example of the format.
 Examples
 --------
 
+Here is an example of using Satsuki to clean up tags.
 This command will delete all tags not connected to a release that
-match the pattern ``Test-*``.
+match the pattern ``Test-*``. To be able to clean tags,
+Satsuki must be run from the ``git`` directory of the repo.
 
 .. code-block::
 

@@ -182,6 +182,22 @@ class Arguments(object):
 
         # tag - required (or latest)
         self.tag = self.kwargs.get('tag', None)
+
+        if (self.tag == "gb_appver" \
+            or self.tag == "gb_v_appver") \
+            and os.path.exists("gravitybee-info.json"):
+            
+            # open gravitybee info file and use app version
+            info_file = open("gravitybee-info.json", "r")
+            self.gb_info = json.loads(info_file.read())
+            info_file.close()
+
+            self.tag = ""
+            if self.tag == "gb_v_appver":
+                self.tag += "v"
+
+            self.tag += self.gb_info['app_version']
+
         if not isinstance(self.tag, str) and not self.latest:
             # check for Travis & AppVeyor values
             self.tag = os.environ.get(

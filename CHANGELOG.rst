@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.1.8 - 2018.05.14
+------------------
+* [ENHANCEMENT] Tag can now be based on info file written by
+  GravityBee (app version from).
+
 0.1.7 - 2018.05.11
 ------------------
 * [BUG FIX] Many bug fixes improving compatibility with Windows.
