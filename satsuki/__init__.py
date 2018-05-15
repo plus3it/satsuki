@@ -106,7 +106,7 @@ class Arguments(object):
     FILE_SHA_SEP_FILE = "file"
     FILE_SHA_LABEL = "label"
 
-    PER_PAGE = 10
+    PER_PAGE = 100
 
     @classmethod
     def get_hash(cls, filename):
@@ -385,7 +385,7 @@ class Arguments(object):
                         info['sha256'] = Arguments.get_hash(filename)
 
                     if self.file_sha == Arguments.FILE_SHA_LABEL:
-                        info['label'] += " (SHA256:" + info['sha256'] + ")"
+                        info['label'] += " (SHA256: " + info['sha256'] + ")"
                     elif self.file_sha == Arguments.FILE_SHA_SEP_FILE:
                         sha_file.write(info['filename'] + ': ' + info['sha256'] + "\n")
 
@@ -416,10 +416,14 @@ class Arguments(object):
                         info['filename'] = sha_filename
                         info['path'] = sha_filename
                         info['sha256'] = Arguments.get_hash(sha_filename)
-                        info['label'] = "SHA256 hashes for " + platform.system() + " file(s) (This file: " + info['sha256'] + ")"
+                        info['label'] = "SHA256 hash(es) for " \
+                            + platform.system() \
+                            + " file(s)\n(This file: " \
+                            + info['sha256'] \
+                            + ")"
                         info['mime-type'] = "text/plain"
                         
-                        self.file_info.append(info)
+                        self.file_info.insert(0, info)
 
             elif self.user_command == Arguments.COMMAND_DELETE:
                 for i, filename in enumerate(self.files):
@@ -696,7 +700,7 @@ class ReleaseMgr(object):
         satsuki.verboseprint("Finding asset:", id)
 
         # get asset list is not done already
-        if not isinstance(self.args._asset_list, list):
+        if not isinstance(self.args._asset_list, github.PaginatedList.PaginatedList):
             satsuki.verboseprint("Getting asset list")
             self.args._asset_list = self.args.working_release.get_assets()
 
@@ -741,7 +745,20 @@ class ReleaseMgr(object):
         """
         Uploads files to a release.
         """
+        files_to_upload = len(self.args.file_info)
+        file_uploading = 0
+
         for info in self.args.file_info:
+
+            file_uploading += 1
+
+            satsuki.verboseprint(
+                "Uploading file " 
+                + str(file_uploading) 
+                + "/" 
+                + str(files_to_upload) 
+                + "..."
+            )
 
             # no way to update uploaded file, so delete->upload
             self._delete_release_asset(info['filename'])
@@ -827,6 +844,13 @@ class ReleaseMgr(object):
 
                 if success:
                     satsuki.verboseprint("Upload successful!")
+
+            if file_uploading < files_to_upload \
+                and self.args.internal_command == Arguments._COMMAND_UPDATE:
+                # fix for PyGithub issue
+                # can remove when PR #771 is merged
+                # https://github.com/PyGithub/PyGithub/pull/771
+                self.args._get_release()
 
 
     def _delete_file(self):

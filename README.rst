@@ -264,6 +264,11 @@ SATS_MIME         -m, --mime        The mime type for files. *Default:
                                     A guess of the file type or*
                                     ``application/octet-stream`` *if all else
                                     fails.*
+SATS_FILE_SHA     --file-sha        Whether to create SHA256 hashes for upload
+                                    files, and either append them to the file
+                                    label or upload them in a separate file.
+                                    Valid options are: ``none``, ``file``, and
+                                    ``label``. *Default: file*
 SATS_FILE_FILE    --file-file       Name of JSON file with information about
                                     file(s) to upload.
                                     See below.
