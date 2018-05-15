@@ -193,6 +193,7 @@ class Arguments(object):
         self.gb_subs = {}
 
         if os.path.exists(satsuki.GB_INFO_FILE):
+            satsuki.verboseprint("Setting up variable substitution...")
 
             # open gravitybee info file and use app version
             info_file = open(satsuki.GB_INFO_FILE, "r")
@@ -208,6 +209,11 @@ class Arguments(object):
 
             if hasattr(self.gb_info, 'created_file'):
                 self.gb_subs['gb_sa_app'] = self.gb_info['created_file']
+
+            satsuki.verboseprint("Substitutions: ", self.gb_subs)
+
+        else:
+            satsuki.verboseprint("No variable substitution. No GravityBee file found.")
 
 
     def _get_release(self):
