@@ -24,11 +24,15 @@ import subprocess
 import fnmatch
 import hashlib
 import socket
+import platform
+
+from string import Template
 
 __version__ = "0.1.7"
 VERBOSE_MESSAGE_PREFIX = "[Satsuki]"
 EXIT_OK = 0
 MAX_UPLOAD_ATTEMPTS = 3
+GB_INFO_FILE = "gravitybee-info.json"
 
 verbose = False
 pyppy = None
@@ -98,7 +102,29 @@ class Arguments(object):
     _COMMAND_DELETE_REL = "i_delete_rel"
     _COMMAND_DELETE_TAG = "i_delete_tag"
 
+    FILE_SHA_NONE = "none"
+    FILE_SHA_SEP_FILE = "file"
+    FILE_SHA_LABEL = "label"
+
     PER_PAGE = 10
+
+    @classmethod
+    def get_hash(cls, filename):
+        """
+        Finds a SHA256 for the given file.
+
+        Args:
+            filename: A str representing a file.
+        """
+
+        if os.path.exists(filename):
+            sha256 = hashlib.sha256()
+            with open(filename, "rb") as f:
+                for chunk in iter(lambda: f.read(4096), b""):
+                    sha256.update(chunk)
+            return sha256.hexdigest()
+        else:
+            return None
 
 
     def _init_basic(self):
@@ -157,6 +183,32 @@ class Arguments(object):
             self.slug = self.user + '/' + self.repo
 
 
+    def _init_gb_info(self):
+        """
+        Gets gb_info, if any. The gb_info file is not required and
+        one of many ways to get information to Satsuki.
+        """
+
+        self.gb_info = None
+        self.gb_subs = {}
+
+        if os.path.exists(satsuki.GB_INFO_FILE):
+
+            # open gravitybee info file and use app version
+            info_file = open(satsuki.GB_INFO_FILE, "r")
+            self.gb_info = json.loads(info_file.read())
+            info_file.close()
+
+            if hasattr(self.gb_info, 'app_version'):
+                self.gb_subs['gb_pkg_ver'] = self.gb_info['app_version']
+
+            if hasattr(self.gb_info, 'app_name'):
+                self.gb_subs['gb_pkg_name'] = self.gb_info['app_name']
+
+            if hasattr(self.gb_info, 'created_file'):
+                self.gb_subs['gb_sa_app'] = self.gb_info['created_file']
+
+
     def _get_release(self):
         """
         Handles initializing the GitHub repo and release, which
@@ -205,20 +257,8 @@ class Arguments(object):
         # tag - required (or latest)
         self.tag = self.kwargs.get('tag', None)
 
-        if (self.tag == "gb_appver" \
-            or self.tag == "gb_v_appver") \
-            and os.path.exists("gravitybee-info.json"):
-
-            # open gravitybee info file and use app version
-            info_file = open("gravitybee-info.json", "r")
-            self.gb_info = json.loads(info_file.read())
-            info_file.close()
-
-            self.tag = ""
-            if self.tag == "gb_v_appver":
-                self.tag += "v"
-
-            self.tag += self.gb_info['app_version']
+        if isinstance(self.tag, str):
+            self.tag = Template(self.tag).safe_substitute(self.gb_subs)
 
         if not isinstance(self.tag, str) and not self.latest:
             # check for Travis & AppVeyor values
@@ -273,6 +313,7 @@ class Arguments(object):
         self.files = self.kwargs.get('file', [])
         self.labels = self.kwargs.get('label', [])
         self.mimes = self.kwargs.get('mime', [])
+        self.file_sha = self.kwargs.get('file_sha', Arguments.FILE_SHA_SEP_FILE)
 
         self.file_file = self.kwargs.get('file_file',None)
 
@@ -280,7 +321,6 @@ class Arguments(object):
             self.file_file = 'gravitybee-files.json' # for integration with GravityBee
 
         # handle the file_file
-        # todo: validate JSON
         if not self.file_file is None \
             and os.path.isfile(self.file_file):
             file_file = open(self.file_file, "r")
@@ -321,18 +361,33 @@ class Arguments(object):
                         satsuki.verboseprint("Glob result:", one_file)
                         new_files.append(one_file)
 
+                if self.file_sha == Arguments.FILE_SHA_SEP_FILE:
+                    sha_filename = platform.system().lower() + '_sha256.txt'
+                    sha_file = open(sha_filename, "w+")
+
                 # setup data structure for each file
                 for i, filename in enumerate(new_files):
                     info = {}
                     info['filename'] = os.path.basename(filename)
                     info['path'] = filename
                     if len(self.labels) > 0:
+                        
                         if len(self.labels) == 1:
-                            info['label'] = self.labels[0]
+                            info['label'] = Template(self.labels[0]).safe_substitute(self.gb_subs)
                         else:
-                            info['label'] = self.labels[i]
+                            info['label'] = Template(self.labels[i]).safe_substitute(self.gb_subs)
+
                     else:
-                        info['label'] = None
+
+                        info['label'] = info['filename']
+
+                    if self.file_sha is not Arguments.FILE_SHA_NONE:
+                        info['sha256'] = Arguments.get_hash(filename)
+
+                    if self.file_sha == Arguments.FILE_SHA_LABEL:
+                        info['label'] += " (SHA256:" + info['sha256'] + ")"
+                    elif self.file_sha == Arguments.FILE_SHA_SEP_FILE:
+                        sha_file.write(info['filename'] + ': ' + info['sha256'] + "\n")
 
                     if len(self.mimes) > 0:
                         if len(self.mimes) == 1:
@@ -342,7 +397,29 @@ class Arguments(object):
                     else:
                         info['mime-type'] = None
 
-                    self.file_info.append(info)
+                    if os.path.isfile(filename):
+                        self.file_info.append(info)
+                    else:
+                        satsuki.verboseprint(
+                            "Skipping file.", 
+                            filename, 
+                            "does not exist."
+                        )
+
+                if self.file_sha == Arguments.FILE_SHA_SEP_FILE:
+
+                    sha_file.close()
+
+                    if len(self.file_info) > 0:
+
+                        info = {}
+                        info['filename'] = sha_filename
+                        info['path'] = sha_filename
+                        info['sha256'] = Arguments.get_hash(sha_filename)
+                        info['label'] = "SHA256 hashes for " + platform.system() + " file(s) (This file: " + info['sha256'] + ")"
+                        info['mime-type'] = "text/plain"
+                        
+                        self.file_info.append(info)
 
             elif self.user_command == Arguments.COMMAND_DELETE:
                 for i, filename in enumerate(self.files):
@@ -351,6 +428,7 @@ class Arguments(object):
                     info['path'] = filename
                     info['label'] = None
                     info['mime-type'] = None
+                    info['sha256'] = None
                     self.file_info.append(info)
 
         if len(self.files) > 0 and len(self.file_info) == 0:
@@ -380,8 +458,25 @@ class Arguments(object):
         # no change
         self.pre = self.kwargs.get('pre', self.working_release.prerelease)
         self.draft = self.kwargs.get('draft', self.working_release.draft)
-        self.body = self.kwargs.get('body', self.working_release.body)
-        self.rel_name = self.kwargs.get('rel_name', self.working_release.title)
+
+        # use templates for body and rel_name if necessary
+        self.body = self.kwargs.get('body', None)
+
+        if self.body == None:
+            # use existing value if none given
+            self.body = self.working_release.body
+        else:
+            # possible template expansion
+            self.body = Template(self.body).safe_substitute(self.gb_subs)
+
+        self.rel_name = self.kwargs.get('rel_name', None)
+
+        if self.rel_name == None:
+            # use existing value if none given
+            self.rel_name = self.working_release.title
+        else:
+            # possible template expansion
+            self.rel_name = Template(self.rel_name).safe_substitute(self.gb_subs)
 
         # since this is an update, commitish is not necessary
         self.target_commitish = None
@@ -440,6 +535,7 @@ class Arguments(object):
                 satsuki.verboseprint("draft:",self.draft)
 
             satsuki.verboseprint("# files:", len(self.file_info))
+            satsuki.verboseprint("SHA256 for files: ", self.file_sha)
 
             if self.file_info is not None:
                 for info in self.file_info:
@@ -449,7 +545,9 @@ class Arguments(object):
                         "label:",
                         info['label'],
                         "mime:",
-                        info['mime-type']
+                        info['mime-type'],
+                        "sha256:",
+                        info['sha256']
                     )
 
         except Exception as err:
@@ -475,6 +573,7 @@ class Arguments(object):
 
         # helper inits
         self._init_basic()
+        self._init_gb_info()
         self._init_files()
         self._init_tag()
         self._init_internal_command()
@@ -500,6 +599,7 @@ class ReleaseMgr(object):
         args: An instance of satsuki.Arguments containing
             the configuration information for Satsuki.
     """
+
 
     def __init__(self, args=None):
         """
@@ -579,25 +679,6 @@ class ReleaseMgr(object):
         )
 
 
-    @classmethod
-    def _get_hash(cls, filename):
-        """
-        Finds a SHA256 for the given file.
-
-        Args:
-            filename: A str representing a file.
-        """
-
-        if os.path.exists(filename):
-            sha256 = hashlib.sha256()
-            with open(filename, "rb") as f:
-                for chunk in iter(lambda: f.read(4096), b""):
-                    sha256.update(chunk)
-            return sha256.hexdigest()
-        else:
-            return None
-
-
     def _find_release_asset(self, id):
         """
         Finds a release asset associated with a release. Since no
@@ -655,6 +736,7 @@ class ReleaseMgr(object):
         if delete_asset is not None:
             delete_asset.delete_asset()
 
+
     def _upload_files(self):
         """
         Uploads files to a release.
@@ -668,8 +750,6 @@ class ReleaseMgr(object):
             satsuki.verboseprint("Upload file:",info['filename'])
             complete_filesize = os.path.getsize(info['path'])
             satsuki.verboseprint("File size on disk:", complete_filesize)
-            filehash = ReleaseMgr._get_hash(info['path'])
-            satsuki.verboseprint("SHA256:", filehash)
             attempts = 0
             release_asset = None
             success = False
@@ -682,7 +762,6 @@ class ReleaseMgr(object):
                         upload_args['label'] = info['filename']
                     else:
                         upload_args['label'] = info['label']
-                    upload_args['label'] += "   (SHA256: " + filehash + ")"
 
                     if info['mime-type'] is not None:
                         upload_args['content_type'] = info['mime-type']
@@ -714,7 +793,7 @@ class ReleaseMgr(object):
 
                     satsuki.verboseprint("Connection error!")
                     satsuki.verboseprint("This may be an inconsequential error...")
-                    satsuki.verboseprint("Error:", err)
+                    satsuki.verboseprint("Error:", type(err), err)
 
                     if hasattr(release_asset, 'size') \
                         and release_asset.size == complete_filesize:
@@ -725,9 +804,11 @@ class ReleaseMgr(object):
                             raise err
 
                 except Exception as err:
+
                     if hasattr(release_asset, 'size'):
                         satsuki.verboseprint("Asset size:", release_asset.size)
-                    satsuki.verboseprint("Exception type:",type(err))
+
+                    satsuki.verboseprint("Exception type:", type(err))
                     satsuki.verboseprint(
                         "Upload FAILED, remaining attempts:",
                         satsuki.MAX_UPLOAD_ATTEMPTS - attempts,
@@ -747,6 +828,7 @@ class ReleaseMgr(object):
                 if success:
                     satsuki.verboseprint("Upload successful!")
 
+
     def _delete_file(self):
         """
         Deletes a file (i.e., release asset) from a release.
@@ -757,6 +839,7 @@ class ReleaseMgr(object):
             asset = self._find_release_asset(info['filename'])
             if asset is not None:
                 asset.delete_asset()
+
 
     def _delete_release(self):
         """

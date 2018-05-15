@@ -81,10 +81,6 @@ click.disable_unicode_literals_warning = True
     + 'a POSIX-style glob and all matching files will be uploaded. '
     + 'This option can be used multiple times to upload multiple '
     + 'files. Default: No file is uploaded.')
-@click.option('--file-file', 'file_file', envvar='SATS_FILE_FILE',
-    default=None, help='File containing name(s) of files to be '
-    + 'uploaded.'
-    + 'Default: Looks for gravitybee-files.json.')
 @click.option('--label', '-l', 'label', envvar='SATS_LABEL', multiple=True,
     default=None, help='Label to display for files instead of the '
     + 'file name. Not recommended with multiple file upload since '
@@ -94,7 +90,18 @@ click.disable_unicode_literals_warning = True
     default=None, help='The mime type for files. Default: A guess of '
     + 'the file type or ``application/octet-stream`` if all else '
     + 'fails.')
-
+@click.option('--file-sha', 'file_sha', envvar='SATS_FILE_SHA',
+    type=click.Choice([
+        satsuki.Arguments.FILE_SHA_NONE,
+        satsuki.Arguments.FILE_SHA_SEP_FILE,
+        satsuki.Arguments.FILE_SHA_LABEL
+    ]), default=satsuki.Arguments.FILE_SHA_SEP_FILE,
+    help='Whether to create SHA 256 hashes for upload files, and '
+    + 'append them to the file label or upload them in a separate file.')
+@click.option('--file-file', 'file_file', envvar='SATS_FILE_FILE',
+    default=None, help='File containing name(s) of files to be '
+    + 'uploaded.'
+    + 'Default: Looks for gravitybee-files.json.')
 
 def main(**kwargs):
     """Entry point for Satsuki CLI."""
