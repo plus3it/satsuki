@@ -200,14 +200,14 @@ class Arguments(object):
             self.gb_info = json.loads(info_file.read())
             info_file.close()
 
-            if hasattr(self.gb_info, 'app_version'):
+            if self.gb_info.get('app_version',None) is not None:
                 self.gb_subs['gb_pkg_ver'] = self.gb_info['app_version']
 
-            if hasattr(self.gb_info, 'app_name'):
+            if self.gb_info.get('app_name',None) is not None:
                 self.gb_subs['gb_pkg_name'] = self.gb_info['app_name']
                 self.gb_subs['gb_pkg_name_lower'] = self.gb_info['app_name'].lower()
 
-            if hasattr(self.gb_info, 'created_file'):
+            if self.gb_info.get('created_file',None) is not None:
                 self.gb_subs['gb_sa_app'] = self.gb_info['created_file']
 
             satsuki.verboseprint("Substitutions: ", self.gb_subs)
