@@ -204,6 +204,7 @@ class Arguments(object):
 
             if hasattr(self.gb_info, 'app_name'):
                 self.gb_subs['gb_pkg_name'] = self.gb_info['app_name']
+                self.gb_subs['gb_pkg_name_lower'] = self.gb_info['app_name'].lower()
 
             if hasattr(self.gb_info, 'created_file'):
                 self.gb_subs['gb_sa_app'] = self.gb_info['created_file']

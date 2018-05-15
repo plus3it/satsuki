@@ -299,17 +299,18 @@ on all the following conditions being met:
 
 These are the variables you can use.
 
-================    ==========================================
-VARIABLE            Desciption
-================    ==========================================
-$gb_pkg_ver         The version of the package extracted by
-                    GravityBee from setup.py or setup.cfg.
-$gb_pkg_name        The name of the package extracted by
-                    GravityBee from setup.py or setup.cfg,
-                    which is often the application name.
-$gb_sa_app          The name of the binary file, standalone
-                    application created by GravityBee.
-================    ==========================================
+=====================   ==========================================
+VARIABLE                Desciption
+=====================   ==========================================
+$gb_pkg_ver             The version of the package extracted by
+                        GravityBee from setup.py or setup.cfg.
+$gb_pkg_name            The name of the package extracted by
+                        GravityBee from setup.py or setup.cfg,
+                        which is often the application name.
+$gb_pkg_name_lower      Same as $gb_pkg_name but lowercase.
+$gb_sa_app              The name of the binary file, standalone
+                        application created by GravityBee.
+=====================   ==========================================
 
 An example of using substitution.
 
