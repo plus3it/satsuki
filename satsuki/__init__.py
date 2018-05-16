@@ -25,6 +25,7 @@ import fnmatch
 import hashlib
 import socket
 import platform
+import pprint
 
 from string import Template
 
@@ -33,6 +34,7 @@ VERBOSE_MESSAGE_PREFIX = "[Satsuki]"
 EXIT_OK = 0
 MAX_UPLOAD_ATTEMPTS = 3
 GB_INFO_FILE = "gravitybee-info.json"
+HASH_FILE = "$platform-sha256.json"
 
 verbose = False
 pyppy = None
@@ -84,6 +86,8 @@ class Arguments(object):
             information on files. File must be in JSON.
         file_info: A list of dicts filename, path, label, and mime
             type for files.
+        file_sha: A str with option of how to handle SHA256
+            hashes (none, file, label).
         pre: A bool representing whether release is prerelease.
         draft: A bool representing whether release is a draft.
         body: A str with message associated with the release.
@@ -426,12 +430,9 @@ class Arguments(object):
 
             preprocessed_files = [] # will replace self.file_info
 
-            if self.file_sha == Arguments.FILE_SHA_SEP_FILE:
-                sha_filename = platform.system().lower() + '_sha256.txt'
-                sha_file = open(sha_filename, "w+")
+            sha_dict = {}
 
             for info in self.file_info:
-
                 # take care of sha hash and existence of file
 
                 if self.file_sha is not Arguments.FILE_SHA_NONE:
@@ -439,8 +440,9 @@ class Arguments(object):
 
                 if self.file_sha == Arguments.FILE_SHA_LABEL:
                     info['label'] += " (SHA256: " + info['sha256'] + ")"
+
                 elif self.file_sha == Arguments.FILE_SHA_SEP_FILE:
-                    sha_file.write(info['filename'] + ': ' + info['sha256'] + "\n")
+                    sha_dict[info['filename']] = info['sha256']
 
                 if os.path.isfile(info['path']):
                     preprocessed_files.append(info)
@@ -452,7 +454,17 @@ class Arguments(object):
                     )
 
             if self.file_sha == Arguments.FILE_SHA_SEP_FILE:
+                sha_filename = Template(satsuki.HASH_FILE).safe_substitute({
+                    'platform':platform.system().lower()
+                })
+
+                sha_file = open(sha_filename,'w')
+                sha_file.write(json.dumps(sha_dict))
                 sha_file.close()
+                
+                # should work but not
+                #with open(sha_filename, "w") as out:
+                #    pprint.pprint(json.dumps(sha_dict), stream=out)
 
                 # add the sha hash file to the list of uploads
                 if len(self.file_info) > 0:
