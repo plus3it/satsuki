@@ -480,7 +480,10 @@ class Arguments(object):
                         + ")"
                     info['mime-type'] = "text/plain"
 
-                    preprocessed_files.insert(0, info)
+                    if platform.system().lower() == "windows":
+                        preprocessed_files.insert(0, info)
+                    else:
+                        preprocessed_files.append(info)
 
             self.file_info = preprocessed_files
 
