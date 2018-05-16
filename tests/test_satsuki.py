@@ -6,9 +6,9 @@ import os
 import github
 import platform
 import json
+import requests
 
 from satsuki import Arguments, ReleaseMgr, HASH_FILE
-from urllib.request import urlopen, urlretrieve
 from string import Template
 
 TEST_VERBOSE = True
@@ -112,22 +112,22 @@ def test_download_file(token):
     sha_dict = {}
 
     for check_asset in asset_list:
+        # look through list of assets for uploaded file and sha file
+
         if check_asset.name == os.path.basename(TEST_FILENAME):
+
             # the uploaded asset
-            urlretrieve(check_asset.browser_download_url, TEST_DOWNLOAD)
+            r = requests.get(check_asset.browser_download_url)
+            open(TEST_DOWNLOAD, 'wb').write(r.content)
+            
             # recalc hash of downloaded file
-            assets_calculated_sha = Arguments.get_hash(TEST_DOWNLOAD)
+            assets_calculated_sha = Arguments.get_hash(TEST_DOWNLOAD)                
 
         elif check_asset.name == sha_filename:
+
             # the sha hash file
-            with urlopen(check_asset.browser_download_url) as url:
-                http_info = url.info()
-                if http_info.get_content_charset() is None:
-                    raw_data = url.read()
-                else:
-                    raw_data = url.read().decode(http_info.get_content_charset())
-            sha_dict = json.loads(raw_data)
-            # get hash from the file
+            r = requests.get(check_asset.browser_download_url)
+            sha_dict = r.json()
 
     assert assets_calculated_sha == sha_dict[os.path.basename(TEST_FILENAME)]
 
