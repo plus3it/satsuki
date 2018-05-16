@@ -5,7 +5,6 @@ import uuid
 import os
 import github
 import platform
-import json
 import requests
 
 from satsuki import Arguments, ReleaseMgr, HASH_FILE
