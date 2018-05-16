@@ -280,7 +280,7 @@ SATS_FILE_FILE    --file-file       Name of JSON file with information about
 Variable Substitution
 ---------------------
 
-For certain values, you can include ``$variables`` that will be
+For certain values, you can include variables that will be
 substituted using information from GravityBee.
 Whether variables are replaced depends
 on all the following conditions being met:
@@ -289,12 +289,12 @@ on all the following conditions being met:
   the current directory.
 * The file is correctly formatted JSON.
 * The file uses the correct structure defined by GravityBee.
-* The ``$variables`` are spelled correctly, used, and not
+* The variables are spelled correctly, used, and not
   replaced prior to getting to Satsuki (e.g., by the shell
   or OS). If you're having trouble getting substitutions to work,
   try displaying environment variables (e.g., using
   ``env`` on POSIX systems or ``SET`` on Windows) to make sure
-  ``$``s haven't been replaced. Use single quotes when setting
+  $s haven't been replaced. Use single quotes when setting
   environment variables to prevent premature substitution.
 
 These are the variables you can use.
