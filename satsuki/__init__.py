@@ -210,7 +210,7 @@ class Arguments(object):
             if self.gb_info.get('created_file',None) is not None:
                 self.gb_subs['gb_sa_app'] = self.gb_info['created_file']
 
-            satsuki.verboseprint("Substitutions: ", self.gb_subs)
+            satsuki.verboseprint("Available substitutions: ", self.gb_subs)
 
         else:
             satsuki.verboseprint("No variable substitution. No GravityBee file found.")
@@ -315,6 +315,19 @@ class Arguments(object):
         """
         This will handle multple files from the command lines args
         and/or a file_file.
+
+        For clarity:
+        self.files: list of filenames (usually from command line)
+        self.file_sha: choice of how to handle sha hashes for files
+        self.file_file: a json file containing file info that is
+            equivalent to command line
+        self.file_info: list of dicts of file info used for actual
+            uploads
+        new_files: list of str of filenames potentially glob expanded
+            which is fed back into self.file_info
+        preprocessed_files: list of dicts of file after added sha
+            hashes and filtering out non-existent files, which 
+            then replaces self.file_info
         """
 
         self.files = self.kwargs.get('file', [])
@@ -343,7 +356,8 @@ class Arguments(object):
         # files. same for mimes.
         if len(self.files) > 0:
 
-            satsuki.verboseprint("Processing files:", len(self.files))
+            satsuki.verboseprint("Processing command-line files:", len(self.files))
+
             if len(self.files) != len(self.labels) \
                 and len(self.labels) not in [0, 1]:
                 satsuki._error(
@@ -358,7 +372,7 @@ class Arguments(object):
                     AttributeError
                 )
 
-            new_files = []
+            new_files = [] # potentially glob expanded
             if self.user_command == Arguments.COMMAND_UPSERT:
 
                 # glob expand
@@ -368,17 +382,13 @@ class Arguments(object):
                         satsuki.verboseprint("Glob result:", one_file)
                         new_files.append(one_file)
 
-                if self.file_sha == Arguments.FILE_SHA_SEP_FILE:
-                    sha_filename = platform.system().lower() + '_sha256.txt'
-                    sha_file = open(sha_filename, "w+")
-
                 # setup data structure for each file
                 for i, filename in enumerate(new_files):
                     info = {}
                     info['filename'] = os.path.basename(filename)
                     info['path'] = filename
                     if len(self.labels) > 0:
-                        
+
                         if len(self.labels) == 1:
                             info['label'] = Template(self.labels[0]).safe_substitute(self.gb_subs)
                         else:
@@ -388,14 +398,6 @@ class Arguments(object):
 
                         info['label'] = info['filename']
 
-                    if self.file_sha is not Arguments.FILE_SHA_NONE:
-                        info['sha256'] = Arguments.get_hash(filename)
-
-                    if self.file_sha == Arguments.FILE_SHA_LABEL:
-                        info['label'] += " (SHA256: " + info['sha256'] + ")"
-                    elif self.file_sha == Arguments.FILE_SHA_SEP_FILE:
-                        sha_file.write(info['filename'] + ': ' + info['sha256'] + "\n")
-
                     if len(self.mimes) > 0:
                         if len(self.mimes) == 1:
                             info['mime-type'] = self.mimes[0]
@@ -404,35 +406,11 @@ class Arguments(object):
                     else:
                         info['mime-type'] = None
 
-                    if os.path.isfile(filename):
-                        self.file_info.append(info)
-                    else:
-                        satsuki.verboseprint(
-                            "Skipping file.", 
-                            filename, 
-                            "does not exist."
-                        )
-
-                if self.file_sha == Arguments.FILE_SHA_SEP_FILE:
-
-                    sha_file.close()
-
-                    if len(self.file_info) > 0:
-
-                        info = {}
-                        info['filename'] = sha_filename
-                        info['path'] = sha_filename
-                        info['sha256'] = Arguments.get_hash(sha_filename)
-                        info['label'] = "SHA256 hash(es) for " \
-                            + platform.system() \
-                            + " file(s)\n(This file: " \
-                            + info['sha256'] \
-                            + ")"
-                        info['mime-type'] = "text/plain"
-                        
-                        self.file_info.insert(0, info)
+                    self.file_info.append(info)
 
             elif self.user_command == Arguments.COMMAND_DELETE:
+
+                # files to be deleted may not exist locally
                 for i, filename in enumerate(self.files):
                     info = {}
                     info['filename'] = os.path.basename(filename)
@@ -441,6 +419,58 @@ class Arguments(object):
                     info['mime-type'] = None
                     info['sha256'] = None
                     self.file_info.append(info)
+
+        # processing for all files regardless of provenance
+        if len(self.file_info) > 0 \
+            and self.user_command == Arguments.COMMAND_UPSERT:
+
+            preprocessed_files = [] # will replace self.file_info
+
+            if self.file_sha == Arguments.FILE_SHA_SEP_FILE:
+                sha_filename = platform.system().lower() + '_sha256.txt'
+                sha_file = open(sha_filename, "w+")
+
+            for info in self.file_info:
+
+                # take care of sha hash and existence of file
+
+                if self.file_sha is not Arguments.FILE_SHA_NONE:
+                    info['sha256'] = Arguments.get_hash(info['path'])
+
+                if self.file_sha == Arguments.FILE_SHA_LABEL:
+                    info['label'] += " (SHA256: " + info['sha256'] + ")"
+                elif self.file_sha == Arguments.FILE_SHA_SEP_FILE:
+                    sha_file.write(info['filename'] + ': ' + info['sha256'] + "\n")
+
+                if os.path.isfile(info['path']):
+                    preprocessed_files.append(info)
+                else:
+                    satsuki.verboseprint(
+                        "Skipping file.",
+                        filename,
+                        "does not exist."
+                    )
+
+            if self.file_sha == Arguments.FILE_SHA_SEP_FILE:
+                sha_file.close()
+
+                # add the sha hash file to the list of uploads
+                if len(self.file_info) > 0:
+
+                    info = {}
+                    info['filename'] = sha_filename
+                    info['path'] = sha_filename
+                    info['sha256'] = Arguments.get_hash(sha_filename)
+                    info['label'] = "SHA256 hash(es) for " \
+                        + platform.system() \
+                        + " file(s)\n(This file: " \
+                        + info['sha256'] \
+                        + ")"
+                    info['mime-type'] = "text/plain"
+
+                    preprocessed_files.insert(0, info)
+
+            self.file_info = preprocessed_files
 
         if len(self.files) > 0 and len(self.file_info) == 0:
             satsuki._error(
@@ -521,7 +551,7 @@ class Arguments(object):
             self.rel_name = self.tag
         else:
             # possible template expansion
-            self.rel_name = Template(self.rel_name).safe_substitute(self.gb_subs)        
+            self.rel_name = Template(self.rel_name).safe_substitute(self.gb_subs)
 
         self.target_commitish = self.kwargs.get(
             'commitish',
@@ -697,7 +727,7 @@ class ReleaseMgr(object):
             "Updating release, id:",
             self.args.working_release.id
         )
-        
+
         """
         Call to PyGithub:
         name, message, draft=False, prerelease=False
@@ -782,10 +812,10 @@ class ReleaseMgr(object):
             file_uploading += 1
 
             satsuki.verboseprint(
-                "Uploading file " 
-                + str(file_uploading) 
-                + "/" 
-                + str(files_to_upload) 
+                "Uploading file "
+                + str(file_uploading)
+                + "/"
+                + str(files_to_upload)
                 + "..."
             )
 
@@ -966,7 +996,7 @@ class ReleaseMgr(object):
         Main method to be called once satsuki.Arguments have been
         configured.
 
-        """        
+        """
         if self.args.internal_command == Arguments._COMMAND_DELETE_FILE:
             self._delete_file()
         elif self.args.internal_command == Arguments._COMMAND_DELETE_REL:
