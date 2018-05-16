@@ -503,8 +503,25 @@ class Arguments(object):
         # new insert so provide default values
         self.pre = self.kwargs.get('pre', False)
         self.draft = self.kwargs.get('draft', False)
-        self.body = self.kwargs.get('body', "Release " + self.tag)
-        self.rel_name = self.kwargs.get('rel_name', self.tag)
+
+        # use templates for body and rel_name if necessary
+        self.body = self.kwargs.get('body', None)
+
+        if self.body == None:
+            # use existing value if none given
+            self.body = "Release " + self.tag
+        else:
+            # possible template expansion
+            self.body = Template(self.body).safe_substitute(self.gb_subs)
+
+        self.rel_name = self.kwargs.get('rel_name', None)
+
+        if self.rel_name == None:
+            # use existing value if none given
+            self.rel_name = self.tag
+        else:
+            # possible template expansion
+            self.rel_name = Template(self.rel_name).safe_substitute(self.gb_subs)        
 
         self.target_commitish = self.kwargs.get(
             'commitish',
@@ -575,6 +592,11 @@ class Arguments(object):
         empty_keys = [k for k,v in kwargs.items() if not v]
         for k in empty_keys:
             del kwargs[k]
+
+        # preserving $vars means extra quotes
+        for k, v in kwargs.items():
+            if isinstance(v, str):
+                kwargs[k] = v.strip('"').strip("'")
 
         # store unprocessed kwargs in case they are needed
         self.kwargs = kwargs
