@@ -596,7 +596,7 @@ class Arguments(object):
         # preserving $vars means extra quotes
         for k, v in kwargs.items():
             if isinstance(v, str):
-                kwargs[k] = v.strip('"').strip("'")
+                kwargs[k] = v.strip().strip('"').strip("'")
 
         # store unprocessed kwargs in case they are needed
         self.kwargs = kwargs
