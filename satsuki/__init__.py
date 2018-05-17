@@ -863,7 +863,120 @@ class ReleaseMgr(object):
         delete_asset = self._find_release_asset(filename)
 
         if delete_asset is not None:
+            satsuki.verboseprint("File exists, deleting...")
             delete_asset.delete_asset()
+
+
+    def _handle_upload_error(self, error, file_info, complete_filesize):
+
+        satsuki.verboseprint("Upload error!")    
+        satsuki.verboseprint("Error:", type(error), error)   
+        
+        if type(error) in (
+            BrokenPipeError, 
+            socket.timeout, 
+            ConnectionAbortedError
+        ):
+            # possible non errors
+            satsuki.verboseprint("This may be an inconsequential error...")
+
+            release_asset = self._find_release_asset(file_info['filename'])
+
+            if release_asset is not None \
+                and hasattr(release_asset, 'size') \
+                and release_asset.size == complete_filesize:
+                satsuki.verboseprint("File uploaded correctly")
+                return release_asset
+        
+        return None
+
+
+    def _upload_file(self, file_info):
+        """
+        Upload an individual file to the release.
+        """
+        # no way to update uploaded file, so delete->upload
+        self._delete_release_asset(file_info['filename'])
+
+        # path, label="", content_type=""
+        complete_filesize = os.path.getsize(file_info['path'])
+        satsuki.verboseprint(
+            "Size of", 
+            file_info['filename'], 
+            ":", 
+            complete_filesize)
+        attempts = 0
+        success = False
+
+        error = None
+
+        while attempts < satsuki.MAX_UPLOAD_ATTEMPTS and not success:
+            
+            attempts += 1
+
+            upload_args = {}
+            if file_info['label'] is None:
+                upload_args['label'] = file_info['filename']
+            else:
+                upload_args['label'] = file_info['label']
+
+            if file_info['mime-type'] is not None:
+                upload_args['content_type'] = file_info['mime-type']
+
+            release_asset = None
+            error = None
+
+            satsuki.verboseprint("Uploading file:", file_info['filename'])
+            satsuki.verboseprint(
+                "Attempt:", 
+                str(attempts) + '/' + str(satsuki.MAX_UPLOAD_ATTEMPTS)
+            )
+
+            try:
+
+                release_asset = self.args.working_release.upload_asset(
+                    file_info['path'],
+                    **upload_args
+                )
+
+            except Exception as exc:
+                error = exc
+
+            finally:
+                # fix for PyGithub issue
+                # renew the repo
+                # might be able to remove when PR #771 is merged
+                # https://github.com/PyGithub/PyGithub/pull/771
+                self.args._get_release()
+            
+            if error is None \
+                and hasattr(release_asset, 'size') \
+                and release_asset.size == complete_filesize:
+                success = True
+            
+            else:
+                release_asset = self._handle_upload_error(
+                    error, 
+                    file_info, 
+                    complete_filesize
+                )         
+            
+                if release_asset is not None:
+                    success = True
+
+        # attempts are done... 
+
+        if success:
+
+            satsuki.verboseprint("Successfully uploaded:", release_asset.name)
+            satsuki.verboseprint("Size:", release_asset.size)
+            satsuki.verboseprint("ID:", release_asset.id)
+
+        else:
+            if error is not None:
+                raise error
+            else:
+                raise ConnectionError
 
 
     def _upload_files(self):
@@ -873,113 +986,18 @@ class ReleaseMgr(object):
         files_to_upload = len(self.args.file_info)
         file_uploading = 0
 
-        for info in self.args.file_info:
+        for file_info in self.args.file_info:
 
             file_uploading += 1
 
             satsuki.verboseprint(
-                "Uploading file "
-                + str(file_uploading)
-                + "/"
-                + str(files_to_upload)
-                + "..."
+                "Uploading file",
+                str(file_uploading) + "/" + str(files_to_upload),
+                "..."
             )
+            satsuki.verboseprint("Prepping upload of", file_info['filename'])
 
-            # no way to update uploaded file, so delete->upload
-            self._delete_release_asset(info['filename'])
-
-            # path, label="", content_type=""
-            satsuki.verboseprint("Upload file:",info['filename'])
-            complete_filesize = os.path.getsize(info['path'])
-            satsuki.verboseprint("File size on disk:", complete_filesize)
-            attempts = 0
-            release_asset = None
-            success = False
-            while attempts < satsuki.MAX_UPLOAD_ATTEMPTS and not success:
-                try:
-                    attempts += 1
-
-                    upload_args = {}
-                    if info['label'] is None:
-                        upload_args['label'] = info['filename']
-                    else:
-                        upload_args['label'] = info['label']
-
-                    if info['mime-type'] is not None:
-                        upload_args['content_type'] = info['mime-type']
-
-                    release_asset = self.args.working_release.upload_asset(
-                        info['path'],
-                        **upload_args
-                    )
-
-                    if hasattr(release_asset, 'size'):
-                        satsuki.verboseprint("Asset size:", release_asset.size)
-
-                    if hasattr(release_asset, 'id'):
-                        satsuki.verboseprint("Asset id:", release_asset.id)
-
-                    # not sure if this will be accurate size, need to check
-                    if hasattr(release_asset, 'size') \
-                        and release_asset.size == complete_filesize:
-                        success = True
-                    else:
-                        raise ConnectionError
-
-                except (
-                    BrokenPipeError,
-                    socket.timeout,
-                    ConnectionAbortedError
-                ) as err:
-                    # Errors that potentially don't matter
-
-                    satsuki.verboseprint("Connection error!")
-                    satsuki.verboseprint("This may be an inconsequential error...")
-                    satsuki.verboseprint("Error:", type(err), err)
-
-                    release_asset = self._find_release_asset(info['filename'])
-
-                    if release_asset is not None \
-                        and hasattr(release_asset, 'size') \
-                        and release_asset.size == complete_filesize:
-                        satsuki.verboseprint("File uploaded and size is correct")
-                        success = True
-
-                    else:
-                        if attempts > satsuki.MAX_UPLOAD_ATTEMPTS:
-                            raise err
-
-                except Exception as err:
-
-                    if hasattr(release_asset, 'size'):
-                        satsuki.verboseprint("Asset size:", release_asset.size)
-
-                    satsuki.verboseprint("Exception type:", type(err))
-                    satsuki.verboseprint(
-                        "Upload FAILED, remaining attempts:",
-                        satsuki.MAX_UPLOAD_ATTEMPTS - attempts,
-                        "Error:",
-                        err
-                    )
-
-                    if release_asset is not None:
-                        if hasattr(release_asset, 'state'):
-                            satsuki.verboseprint("State:",release_asset.state)
-
-                        # release_asset.delete_asset() # throwing exception...
-
-                    if attempts > satsuki.MAX_UPLOAD_ATTEMPTS:
-                        raise err
-
-                if success:
-                    satsuki.verboseprint("Upload successful!")
-
-            if file_uploading < files_to_upload \
-                and self.args.internal_command == Arguments._COMMAND_UPDATE:
-                # fix for PyGithub issue
-                # can remove when PR #771 is merged
-                # https://github.com/PyGithub/PyGithub/pull/771
-                self.args._get_release()
+            self._upload_file(file_info)
 
 
     def _delete_file(self):

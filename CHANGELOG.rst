@@ -5,6 +5,16 @@ CHANGE LOG
 ------------------
 * [ENHANCEMENT] Tag can now be based on info file written by
   GravityBee (app version from).
+* [ENHANCEMENT] Allow sha256 hashes to be added to label or uploaded
+  as a separate file.
+* [ENHANCEMENT] Improved testing of SHA hash (downloading file and
+  recalculating.
+* [ENHANCEMENT] Added ability to recreate releases in order to
+  update the tag/commitish associated with the release. Otherwise,
+  releases can be updated but will always point to the same tag/
+  commitish.
+* [BUG FIX] Fixed various bugs with SHA hashes, creating releases,
+  deleting tags, and revamped upload error handling.
 
 0.1.7 - 2018.05.11
 ------------------
