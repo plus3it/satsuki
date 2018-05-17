@@ -323,8 +323,8 @@ class Arguments(object):
 
         # find by filename
         for check_tag in self._tag_list:
-            if check_tag.tag == self.working_release.tag_name:
-                satsuki.verboseprint("Found tag:", check_tag.tag)
+            if check_tag.name == self.working_release.tag_name:
+                satsuki.verboseprint("Found tag:", check_tag.name)
                 return check_tag
 
         return None
@@ -347,9 +347,9 @@ class Arguments(object):
                 self._working_tag = self._find_tag()
 
                 if self._working_tag is not None \
-                    and self._working_tag.get('sha', None) is not None \
+                    and self._working_tag.get('commit', None) is not None \
                     and self.target_commitish is not None \
-                    and self._working_tag.sha != self.target_commitish:
+                    and self._working_tag.commit != self.target_commitish:
                     self.internal_command = Arguments._COMMAND_RECREATE
                 else:
                     self.internal_command = Arguments._COMMAND_UPDATE
