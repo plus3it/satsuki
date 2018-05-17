@@ -23,6 +23,12 @@ click.disable_unicode_literals_warning = True
         satsuki.Arguments.COMMAND_UPSERT
     ]), default=satsuki.Arguments.COMMAND_UPSERT,
     help='Command to create/update a release.')
+@click.option('--recreate-ok', 'recreate', envvar='SATS_RECREATE_OK',
+    is_flag=True, default=False,
+    help='[Flag] Indicates whether a release commitish can be '
+    + 'updated by deleting and recreating the release. '
+    + 'Otherwise, a release cannot be updated with a new '
+    + 'commit SHA.')    
 @click.option('--slug', '-s', 'slug', envvar='SATS_SLUG',
     default=None, help='[Required] Either repo and user or '
     + 'the slug (in the form user/repo) must be '

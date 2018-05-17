@@ -155,6 +155,13 @@ SATS_COMMAND      -c, --command     The operation to perform on the GitHub
                                     file is provided, the file (release
                                     asset) is deleted instead of the release.
                                     *Default:* ``upsert``
+SATS_RECREATE_OK  --recreate        **[Flag]** Indicates whether a release
+                                    commitish can be updated by deleting
+                                    and recreating the release. Otherwise,
+                                    a release cannot be updated with a new
+                                    commit SHA. If this flag is set,
+                                    ``--include-tag`` is implied.
+                                    *Default: not*
 SATS_SLUG         -s, --slug        **[Required]** Either repo and user or
                                     the slug (in the form user/repo) must be
                                     provided. *If not provided, it will default

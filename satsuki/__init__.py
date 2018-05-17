@@ -190,6 +190,8 @@ class Arguments(object):
         elif self.slug is None:
             self.slug = self.user + '/' + self.repo
 
+        self.recreate = self.kwargs.get('recreate', False)
+
         self.target_commitish = self.kwargs.get(
             'commitish',
             os.environ.get(
@@ -305,6 +307,8 @@ class Arguments(object):
             self.latest = False
 
         self.include_tag = self.kwargs.get('include_tag', False)
+        if self.recreate:
+            self.include_tag = True        
 
 
     def _find_tag(self):
@@ -347,9 +351,19 @@ class Arguments(object):
                 self._working_tag = self._find_tag()
 
                 if self._working_tag is not None \
-                    and self._working_tag.get('commit', None) is not None \
+                    and hasattr(self._working_tag, 'commit') \
                     and self.target_commitish is not None \
-                    and self._working_tag.commit != self.target_commitish:
+                    and self._working_tag.commit.sha != self.target_commitish \
+                    and self.recreate:
+                    satsuki.verboseprint(
+                        "Same tag names:", 
+                        self.working_release.tag_name, 
+                        self._working_tag.name)
+                    satsuki.verboseprint(
+                        "Different commitishes:", 
+                        self.target_commitish, 
+                        self._working_tag.commit)
+                    
                     self.internal_command = Arguments._COMMAND_RECREATE
                 else:
                     self.internal_command = Arguments._COMMAND_UPDATE
@@ -697,7 +711,8 @@ class Arguments(object):
 
         if self.internal_command == Arguments._COMMAND_CREATE:
             self._init_data_blank()
-        elif self.internal_command == Arguments._COMMAND_UPDATE:
+        elif self.internal_command == Arguments._COMMAND_UPDATE \
+            or self.internal_command == Arguments._COMMAND_RECREATE:
             self._init_data()
 
         self._init_summary()

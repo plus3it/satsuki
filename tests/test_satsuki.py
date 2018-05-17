@@ -19,6 +19,7 @@ TEST_COMMITISH = "5aacf6b744ec379afafbf3bac2131474a464ee9d"
 TEST_FILENAME = 'tests/release-asset.exe'
 TEST_DOWNLOAD = 'tests/downloaded-asset'
 TEST_DOWNLOAD_SHA = 'tests/downloaded-asset-sha'
+TEST_RECREATE_COMMITISH = "6ba16ceff2efa08fa01c1471c739a6febc2343b6"
 
 def test_blank_arguments():
     """ Returns an Arguments instance with nothing set. """
@@ -130,6 +131,21 @@ def test_download_file(token):
 
     assert assets_calculated_sha == sha_dict[os.path.basename(TEST_FILENAME)]
 
+def test_recreate_release(arguments_base):
+    
+    recreate_args = Arguments(
+        verbose = TEST_VERBOSE,
+        token = arguments_base.api_token,
+        slug = TEST_SLUG,
+        tag = TEST_TAG,
+        recreate = True,
+        commitish = TEST_RECREATE_COMMITISH
+    )
+    new = ReleaseMgr(recreate_args)
+    new.execute() # <== should recreate
+
+    # really the test is if it makes it this far
+    assert recreate_args.target_commitish == TEST_RECREATE_COMMITISH
 
 def test_delete_release(token):
 
