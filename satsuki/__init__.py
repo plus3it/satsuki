@@ -100,7 +100,8 @@ class Arguments(object):
     COMMAND_UPSERT = "upsert"
     COMMAND_DELETE = "delete"
 
-    _COMMAND_INSERT = "i_insert"
+    _COMMAND_CREATE = "i_create"
+    _COMMAND_RECREATE = "i_recreate"
     _COMMAND_UPDATE = "i_update"
     _COMMAND_DELETE_FILE = "i_delete_file"
     _COMMAND_DELETE_REL = "i_delete_rel"
@@ -110,7 +111,7 @@ class Arguments(object):
     FILE_SHA_SEP_FILE = "file"
     FILE_SHA_LABEL = "label"
 
-    PER_PAGE = 100
+    PER_PAGE = 1000
 
     @classmethod
     def get_hash(cls, filename):
@@ -173,8 +174,10 @@ class Arguments(object):
         )
 
         if isinstance(self.slug, str) and '/' not in self.slug:
+
             satsuki.verboseprint("Invalid repo slug:",self.slug)
             self.slug = None
+
         self.repo = self.kwargs.get('repo', None)
         self.user = self.kwargs.get('user', None)
 
@@ -183,8 +186,20 @@ class Arguments(object):
         # n     y       y       good
         if self.slug is None and (self.repo is None or self.user is None):
             satsuki._error("Slug / User & Repo required.", AttributeError)
+
         elif self.slug is None:
             self.slug = self.user + '/' + self.repo
+
+        self.target_commitish = self.kwargs.get(
+            'commitish',
+            os.environ.get(
+                'TRAVIS_COMMIT',
+                os.environ.get(
+                    'APPVEYOR_REPO_COMMIT',
+                    None
+                )
+            )
+        )            
 
 
     def _init_gb_info(self):
@@ -292,27 +307,65 @@ class Arguments(object):
         self.include_tag = self.kwargs.get('include_tag', False)
 
 
+    def _find_tag(self):
+        """
+        Similiar to _find_release_asset(), there is no search function so
+        this is a rudamentary 1-by-1 search.
+
+        To clarify, you can get a release by a tag name but you
+        can't get a tag (which has the commitish) by tag name. :(
+        """
+        satsuki.verboseprint("Finding tag:", self.working_release.tag_name)
+
+        # get tag list is not done already
+        satsuki.verboseprint("Getting tag list")
+        self._tag_list = self.repo.get_tags()
+
+        # find by filename
+        for check_tag in self._tag_list:
+            if check_tag.tag == self.working_release.tag_name:
+                satsuki.verboseprint("Found tag:", check_tag.tag)
+                return check_tag
+
+        return None
+
+
     def _init_internal_command(self):
         """
-        Handles initializing the internal command to one of 5 commands
+        Handles initializing the internal command to one of 6 commands
         based on one of 2 commands provided by the user.
         """
 
         # internal command
         if self._get_release():
+
             # good to: delete, update
             if self.user_command == Arguments.COMMAND_UPSERT:
-                self.internal_command = Arguments._COMMAND_UPDATE
+                
+                # now the question is, is there a commitish and 
+                # is it different than the existing one
+                self._working_tag = self._find_tag()
+
+                if self._working_tag is not None \
+                    and self._working_tag.get('sha', None) is not None \
+                    and self.target_commitish is not None \
+                    and self._working_tag.sha != self.target_commitish:
+                    self.internal_command = Arguments._COMMAND_RECREATE
+                else:
+                    self.internal_command = Arguments._COMMAND_UPDATE
+
             elif len(self.file_info) > 0 \
                 and self.user_command == Arguments.COMMAND_DELETE:
                 self.internal_command = Arguments._COMMAND_DELETE_FILE
             else:
                 self.internal_command = Arguments._COMMAND_DELETE_REL
+
         else:
+
             if self.user_command == Arguments.COMMAND_DELETE:
                 self.internal_command = Arguments._COMMAND_DELETE_TAG
             else:
-                self.internal_command = Arguments._COMMAND_INSERT
+                self.internal_command = Arguments._COMMAND_CREATE
 
 
     def _init_files(self):
@@ -534,9 +587,6 @@ class Arguments(object):
             # possible template expansion
             self.rel_name = Template(self.rel_name).safe_substitute(self.gb_subs)
 
-        # since this is an update, commitish is not necessary
-        self.target_commitish = None
-
 
     def _init_data_blank(self):
         """
@@ -567,17 +617,6 @@ class Arguments(object):
         else:
             # possible template expansion
             self.rel_name = Template(self.rel_name).safe_substitute(self.gb_subs)
-
-        self.target_commitish = self.kwargs.get(
-            'commitish',
-            os.environ.get(
-                'TRAVIS_COMMIT',
-                os.environ.get(
-                    'APPVEYOR_REPO_COMMIT',
-                    ""
-                )
-            )
-        )
 
 
     def _init_summary(self):
@@ -656,7 +695,7 @@ class Arguments(object):
         self._init_tag()
         self._init_internal_command()
 
-        if self.internal_command == Arguments._COMMAND_INSERT:
+        if self.internal_command == Arguments._COMMAND_CREATE:
             self._init_data_blank()
         elif self.internal_command == Arguments._COMMAND_UPDATE:
             self._init_data()
@@ -794,9 +833,7 @@ class ReleaseMgr(object):
                     satsuki.verboseprint("Found asset:", id)
                     return check_asset
 
-        else:
-
-            return None
+        return None
 
 
     def _delete_release_asset(self, filename):
@@ -1019,7 +1056,12 @@ class ReleaseMgr(object):
             self._delete_tag()
         elif self.args.internal_command == Arguments._COMMAND_DELETE_TAG:
             self._delete_tag()
-        elif self.args.internal_command == Arguments._COMMAND_INSERT:
+        elif self.args.internal_command == Arguments._COMMAND_RECREATE:
+            self._delete_release()
+            self._delete_tag()            
+            self._create_release()
+            self._upload_files()
+        elif self.args.internal_command == Arguments._COMMAND_CREATE:
             self._create_release()
             self._upload_files()
         elif self.args.internal_command == Arguments._COMMAND_UPDATE:
