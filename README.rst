@@ -155,6 +155,13 @@ SATS_COMMAND      -c, --command     The operation to perform on the GitHub
                                     file is provided, the file (release
                                     asset) is deleted instead of the release.
                                     *Default:* ``upsert``
+SATS_RECREATE_OK  --recreate        **[Flag]** Indicates whether a release
+                                    commitish can be updated by deleting
+                                    and recreating the release. Otherwise,
+                                    a release cannot be updated with a new
+                                    commit SHA. If this flag is set,
+                                    ``--include-tag`` is implied.
+                                    *Default: not*
 SATS_SLUG         -s, --slug        **[Required]** Either repo and user or
                                     the slug (in the form user/repo) must be
                                     provided. *If not provided, it will default
@@ -164,7 +171,9 @@ SATS_REPO         -r, --repo        **[Required]** The GitHub repository to
                                     work with.
 SATS_USER         -u, --user        **[Required]** The owner of the repository
                                     to work with.
-SATS_REL_NAME     -n, --rel-name    The name of the release.
+SATS_REL_NAME     -n, --rel-name    The name of the release. **Available for
+                                    variable substitution.
+                                    See below.**
                                     *Default: tag name*
 SATS_LATEST       --latest          **[Required][Flag]** Either this option
                                     *OR* ``--tag`` must be used.
@@ -172,6 +181,8 @@ SATS_LATEST       --latest          **[Required][Flag]** Either this option
                                     operations on the latest release.
                                     *Default: Not*
 SATS_BODY         -b, --body        The message that shows up with releases.
+                                    **Available for variable substitution.
+                                    See below.**
                                     *Default: Release <tag>*
 SATS_PRE          -p, --pre         **[Flag]** Whether or not this release
                                     is a prerelease. *Default: Not*
@@ -202,6 +213,8 @@ SATS_TAG          -t, --tag         **[Required]** Either the tag
                                     release ID is provided, and it does not
                                     exist, an error will be thrown to avoid
                                     creating a tag with an ID-like name.
+                                    **Available for variable substitution.
+                                    See below.**
                                     *If not provided,
                                     will default
                                     to the value provided by Travis CI or
@@ -227,15 +240,6 @@ SATS_INCLUDE_TAG  --include-tag     Whether to delete the tag when deleting the
                                     cleaning. *Default: Not*
 ================  ===============   ==========================================
 
-Here is an example of using Satsuki to clean up tags. To be able to clean tags,
-Satsuki must be run from the ``git`` directory of the repo.
-
-.. code-block:: bash
-
-    $ cd coolproject
-    $ satsuki --slug "Owner/coolproject" --token <YOUR_GITHUB_OATH_TOKEN> \
-    --tag Test-* --command delete -v --include-tag
-
 
 Asset Related
 -------------
@@ -258,18 +262,68 @@ SATS_FILE         -f, --file        File(s) to be uploaded as release asset(s).
 SATS_LABEL        -l, --label       Label to display for files instead of the
                                     file name. Not recommended with multiple
                                     file upload since all will share the same
-                                    lable. *Default: GitHub will use the raw
+                                    label. **Available for variable
+                                    substitution.
+                                    See below.** *Default: GitHub will
+                                    use the raw
                                     file name.*
 SATS_MIME         -m, --mime        The mime type for files. *Default:
                                     A guess of the file type or*
                                     ``application/octet-stream`` *if all else
                                     fails.*
+SATS_FILE_SHA     --file-sha        Whether to create SHA256 hashes for upload
+                                    files, and either append them to the file
+                                    label or upload them in a separate file.
+                                    Valid options are: ``none``, ``file``, and
+                                    ``label``. *Default: file*
 SATS_FILE_FILE    --file-file       Name of JSON file with information about
                                     file(s) to upload.
                                     See below.
                                     *Default: Will look for*
                                     ``gravitybee-files.json``
 ================  ===============   ==========================================
+
+
+Variable Substitution
+---------------------
+
+For certain values, you can include variables that will be
+substituted using information from GravityBee.
+Whether variables are replaced depends
+on all the following conditions being met:
+
+* The GravityBee info file (``gravitybee-info.json``) is in
+  the current directory.
+* The file is correctly formatted JSON.
+* The file uses the correct structure defined by GravityBee.
+* The variables are spelled correctly, used, and not
+  replaced prior to getting to Satsuki (e.g., by the shell
+  or OS). If you're having trouble getting substitutions to work,
+  try displaying environment variables (e.g., using
+  ``env`` on POSIX systems or ``SET`` on Windows) to make sure
+  $s haven't been replaced. Use single quotes when setting
+  environment variables to prevent premature substitution.
+
+These are the variables you can use.
+
+=====================   ==========================================
+VARIABLE                Desciption
+=====================   ==========================================
+$gb_pkg_ver             The version of the package extracted by
+                        GravityBee from setup.py or setup.cfg.
+$gb_pkg_name            The name of the package extracted by
+                        GravityBee from setup.py or setup.cfg,
+                        which is often the application name.
+$gb_pkg_name_lower      Same as $gb_pkg_name but lowercase.
+$gb_sa_app              The name of the binary file, standalone
+                        application created by GravityBee.
+=====================   ==========================================
+
+An example of using substitution.
+
+.. code-block::
+
+    $ export SATS_TAG='$gb_pkg_ver' # will be replaced with 4.2.6, for example
 
 
 The Files File
@@ -296,8 +350,10 @@ This is an example of the format.
 Examples
 --------
 
+Here is an example of using Satsuki to clean up tags.
 This command will delete all tags not connected to a release that
-match the pattern ``Test-*``.
+match the pattern ``Test-*``. To be able to clean tags,
+Satsuki must be run from the ``git`` directory of the repo.
 
 .. code-block::
 

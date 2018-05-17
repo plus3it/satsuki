@@ -5,6 +5,8 @@ __pycache__/
 
 # satsuki
 tests/release-asset*
+tests/downloaded*
+*sha256.json
 
 # C extensions
 *.so
