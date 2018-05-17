@@ -812,10 +812,9 @@ class ReleaseMgr(object):
         """
         satsuki.verboseprint("Finding asset:", id)
 
-        # get asset list is not done already
-        if not isinstance(self.args._asset_list, github.PaginatedList.PaginatedList):
-            satsuki.verboseprint("Getting asset list")
-            self.args._asset_list = self.args.working_release.get_assets()
+        # get asset list 
+        satsuki.verboseprint("Getting asset list")
+        self.args._asset_list = self.args.working_release.get_assets()
 
         if isinstance(id, str):
 
@@ -923,8 +922,12 @@ class ReleaseMgr(object):
                     satsuki.verboseprint("This may be an inconsequential error...")
                     satsuki.verboseprint("Error:", type(err), err)
 
-                    if hasattr(release_asset, 'size') \
+                    release_asset = self._find_release_asset(info['filename'])
+
+                    if release_asset is not None \
+                        and hasattr(release_asset, 'size') \
                         and release_asset.size == complete_filesize:
+                        satsuki.verboseprint("File uploaded and size is correct")
                         success = True
 
                     else:
