@@ -74,6 +74,70 @@ def test_get_latest(arguments_base):
         assert True
 
 
+def test_upload_file_no_sha(token):
+    with open(TEST_FILENAME, 'wb') as fout:
+        fout.write(os.urandom(1024000))
+
+    args = Arguments(
+        verbose = TEST_VERBOSE,
+        token = token,
+        slug = TEST_SLUG,
+        tag = TEST_TAG,
+        files_file = "tests/test.file"
+    )
+
+    ul_rel = ReleaseMgr(args)
+    ul_rel.execute()
+    assert True
+
+
+def test_download_file_no_sha(token):
+    """
+    Doesn't directly check Satsuki but rather the effects of Satsuki
+    and creation of file and no SHA hash.
+    """
+
+    # github => repo => release => asset_list => asset => url => download
+
+    gh = github.Github(token, per_page=100)
+    repo = gh.get_repo(TEST_SLUG, lazy=False)
+    release = repo.get_release(TEST_TAG)
+    asset_list = release.get_assets()
+    sha_filename = Template(HASH_FILE).safe_substitute({
+        'platform': platform.system().lower()
+    })
+
+    pass_test = True
+
+    for check_asset in asset_list:
+        # look through list of assets for uploaded file and sha file
+
+        if check_asset.name == sha_filename:
+
+            pass_test = False
+
+    assert pass_test
+
+
+# Order is important, no sha tests upload, recreate gets rid of upload,
+# and then upload can be done again
+def test_recreate_release(arguments_base):
+    
+    recreate_args = Arguments(
+        verbose = TEST_VERBOSE,
+        token = arguments_base.api_token,
+        slug = TEST_SLUG,
+        tag = TEST_TAG,
+        recreate = True,
+        commitish = TEST_RECREATE_COMMITISH
+    )
+    new = ReleaseMgr(recreate_args)
+    new.execute() # <== should recreate
+
+    # really the test is if it makes it this far
+    assert recreate_args.target_commitish == TEST_RECREATE_COMMITISH
+
+
 def test_upload_file(token):
     with open(TEST_FILENAME, 'wb') as fout:
         fout.write(os.urandom(1024000))
@@ -83,8 +147,8 @@ def test_upload_file(token):
         token = token,
         slug = TEST_SLUG,
         tag = TEST_TAG,
-        file_file = "tests/test.file",
-        fila_sha = Arguments.FILE_SHA_SEP_FILE
+        files_file = "tests/test.file",
+        file_sha = Arguments.FILE_SHA_SEP_FILE
     )
 
     ul_rel = ReleaseMgr(args)
@@ -131,22 +195,9 @@ def test_download_file(token):
 
     assert assets_calculated_sha == sha_dict[os.path.basename(TEST_FILENAME)]
 
-def test_recreate_release(arguments_base):
-    
-    recreate_args = Arguments(
-        verbose = TEST_VERBOSE,
-        token = arguments_base.api_token,
-        slug = TEST_SLUG,
-        tag = TEST_TAG,
-        recreate = True,
-        commitish = TEST_RECREATE_COMMITISH
-    )
-    new = ReleaseMgr(recreate_args)
-    new.execute() # <== should recreate
 
-    # really the test is if it makes it this far
-    assert recreate_args.target_commitish == TEST_RECREATE_COMMITISH
 
+"""
 def test_delete_release(token):
 
     delete_args = Arguments(
@@ -161,3 +212,4 @@ def test_delete_release(token):
     del_rel = ReleaseMgr(delete_args)
     del_rel.execute()
     assert True
+"""

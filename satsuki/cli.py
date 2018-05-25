@@ -101,10 +101,10 @@ click.disable_unicode_literals_warning = True
         satsuki.Arguments.FILE_SHA_NONE,
         satsuki.Arguments.FILE_SHA_SEP_FILE,
         satsuki.Arguments.FILE_SHA_LABEL
-    ]), default=satsuki.Arguments.FILE_SHA_SEP_FILE,
+    ]), default=satsuki.Arguments.FILE_SHA_NONE,
     help='Whether to create SHA 256 hashes for upload files, and '
     + 'append them to the file label or upload them in a separate file.')
-@click.option('--file-file', 'file_file', envvar='SATS_FILE_FILE',
+@click.option('--files-file', 'files_file', envvar='SATS_FILES_FILE',
     default=None, help='File containing name(s) of files to be '
     + 'uploaded.'
     + 'Default: Looks for gravitybee-files.json.')
