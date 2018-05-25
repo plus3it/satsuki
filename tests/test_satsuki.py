@@ -196,8 +196,6 @@ def test_download_file(token):
     assert assets_calculated_sha == sha_dict[os.path.basename(TEST_FILENAME)]
 
 
-
-"""
 def test_delete_release(token):
 
     delete_args = Arguments(
@@ -212,4 +210,3 @@ def test_delete_release(token):
     del_rel = ReleaseMgr(delete_args)
     del_rel.execute()
     assert True
-"""
