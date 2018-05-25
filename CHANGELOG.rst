@@ -1,6 +1,12 @@
 CHANGE LOG
 ==========
 
+0.1.9 - 2018.05.25
+------------------
+* [ENHANCEMENT] Code clean up.
+* [ENHANCEMENT] Changed SHA default to None.
+* [BUG FIX] Fixed bug in tests affecting SHA hash test.
+
 0.1.8 - 2018.05.14
 ------------------
 * [ENHANCEMENT] Tag can now be based on info file written by

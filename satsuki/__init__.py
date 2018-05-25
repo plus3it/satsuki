@@ -3,10 +3,10 @@
 
 Satsuki is a Python package that helps manage GitHub releases and
 release assets. Satsuki is especially useful paired with Continuous
-Integration/ Continuous Deployment (CI/CD) tools such as Travis CI and
+Integration/Continuous Deployment (CI/CD) tools such as Travis CI and
 AppVeyor.
 
-This module can be used by python scripts or through the included command-
+This module can be used by Python scripts or through the included command-
 line interface (CLI).
 
 Example:
@@ -25,11 +25,10 @@ import fnmatch
 import hashlib
 import socket
 import platform
-import pprint
 
 from string import Template
 
-__version__ = "0.1.8"
+__version__ = "0.1.9"
 VERBOSE_MESSAGE_PREFIX = "[Satsuki]"
 EXIT_OK = 0
 MAX_UPLOAD_ATTEMPTS = 3
@@ -82,7 +81,7 @@ class Arguments(object):
             files to be uploaded.
         mimes: A list of str of mimes associated with the
             files to be uploaded.
-        file_file: A str with a file to be read to provide
+        files_file: A str with a file to be read to provide
             information on files. File must be in JSON.
         file_info: A list of dicts filename, path, label, and mime
             type for files.
@@ -110,6 +109,8 @@ class Arguments(object):
     FILE_SHA_NONE = "none"
     FILE_SHA_SEP_FILE = "file"
     FILE_SHA_LABEL = "label"
+
+    GB_FILES_FILE = 'gravitybee-files.json'
 
     PER_PAGE = 1000
 
@@ -142,8 +143,7 @@ class Arguments(object):
         self.api_token = self.kwargs.get('token',None)
         if self.api_token is None:
             satsuki._error(
-                "No GitHub API token was provided using SATS_TOKEN "
-                + "environment variable.",
+                "No GitHub API token was provided.",
                 PermissionError
             )
 
@@ -385,12 +385,12 @@ class Arguments(object):
     def _init_files(self):
         """
         This will handle multple files from the command lines args
-        and/or a file_file.
+        and/or a files_file.
 
         For clarity:
         self.files: list of filenames (usually from command line)
         self.file_sha: choice of how to handle sha hashes for files
-        self.file_file: a json file containing file info that is
+        self.files_file: a json file containing file info that is
             equivalent to command line
         self.file_info: list of dicts of file info used for actual
             uploads
@@ -404,21 +404,27 @@ class Arguments(object):
         self.files = self.kwargs.get('file', [])
         self.labels = self.kwargs.get('label', [])
         self.mimes = self.kwargs.get('mime', [])
-        self.file_sha = self.kwargs.get('file_sha', Arguments.FILE_SHA_SEP_FILE)
+        self.file_sha = self.kwargs.get('file_sha', Arguments.FILE_SHA_NONE)
+        satsuki.verboseprint("****************self.file_sha:", self.file_sha)
 
-        self.file_file = self.kwargs.get('file_file',None)
+        self.files_file = self.kwargs.get('files_file', None)
 
-        if len(self.files) == 0 and self.file_file is None:
-            self.file_file = 'gravitybee-files.json' # for integration with GravityBee
+        self.file_info = []
 
-        # handle the file_file
-        if not self.file_file is None \
-            and os.path.isfile(self.file_file):
-            file_file = open(self.file_file, "r")
-            self.file_info = json.loads(file_file.read())
-            file_file.close()
-        else:
-            self.file_info = []
+        # handle the files_file
+        if not self.files_file is None \
+            and os.path.isfile(self.files_file):
+            files_file = open(self.files_file, "r")
+            self.file_info += json.loads(files_file.read())
+            files_file.close()
+
+        # handle the GravityBee files_file
+        if os.path.exists(Arguments.GB_FILES_FILE) \
+            and self.user_command == Arguments.COMMAND_UPSERT:
+            # merge into file_info      
+            files_file = open(Arguments.GB_FILES_FILE, "r")
+            self.file_info += json.loads(files_file.read())
+            files_file.close()       
 
         # handle the command line files, et al.
 
@@ -528,10 +534,6 @@ class Arguments(object):
                 sha_file = open(sha_filename,'w')
                 sha_file.write(json.dumps(sha_dict))
                 sha_file.close()
-                
-                # should work but not
-                #with open(sha_filename, "w") as out:
-                #    pprint.pprint(json.dumps(sha_dict), stream=out)
 
                 # add the sha hash file to the list of uploads
                 if len(self.file_info) > 0:
@@ -545,7 +547,7 @@ class Arguments(object):
                         + " file(s)\n(This file: " \
                         + info['sha256'] \
                         + ")"
-                    info['mime-type'] = "text/plain"
+                    info['mime-type'] = "application/json"
 
                     if platform.system().lower() == "windows":
                         preprocessed_files.insert(0, info)
@@ -671,10 +673,13 @@ class Arguments(object):
                         "label:",
                         info['label'],
                         "mime:",
-                        info['mime-type'],
-                        "sha256:",
-                        info['sha256']
+                        info['mime-type']
                     )
+                    if info.get("sha256", None) is not None:
+                        satsuki.verboseprint(
+                            "sha256:",
+                            info['sha256']
+                        )
 
         except Exception as err:
             satsuki.verboseprint("Verbosity problem:", err)
@@ -908,7 +913,7 @@ class ReleaseMgr(object):
         attempts = 0
         success = False
 
-        error = None
+        error = ConnectionError
 
         while attempts < satsuki.MAX_UPLOAD_ATTEMPTS and not success:
             
