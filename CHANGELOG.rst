@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.1.10 - 2018.05.25
+-------------------
+* [ENHANCEMENT] Updated for compatibility with GravityBee.
+
 0.1.9 - 2018.05.25
 ------------------
 * [ENHANCEMENT] Code clean up.
