@@ -228,8 +228,8 @@ class Arguments(object):
                 self.gb_subs['gb_pkg_name'] = self.gb_info['app_name']
                 self.gb_subs['gb_pkg_name_lower'] = self.gb_info['app_name'].lower()
 
-            if self.gb_info.get('created_file',None) is not None:
-                self.gb_subs['gb_sa_app'] = self.gb_info['created_file']
+            if self.gb_info.get('gen_file',None) is not None:
+                self.gb_subs['gb_sa_app'] = self.gb_info['gen_file']
 
             satsuki.verboseprint("Available substitutions: ", self.gb_subs)
 
@@ -405,7 +405,6 @@ class Arguments(object):
         self.labels = self.kwargs.get('label', [])
         self.mimes = self.kwargs.get('mime', [])
         self.file_sha = self.kwargs.get('file_sha', Arguments.FILE_SHA_NONE)
-        satsuki.verboseprint("****************self.file_sha:", self.file_sha)
 
         self.files_file = self.kwargs.get('files_file', None)
 
