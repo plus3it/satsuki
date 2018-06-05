@@ -31,9 +31,6 @@ from string import Template
 __version__ = "0.1.10"
 VERBOSE_MESSAGE_PREFIX = "[Satsuki]"
 EXIT_OK = 0
-MAX_UPLOAD_ATTEMPTS = 3
-GB_INFO_FILE = "gravitybee-info.json"
-HASH_FILE = "$platform-sha256.json"
 
 verbose = False
 pyppy = None
@@ -110,7 +107,11 @@ class Arguments(object):
     FILE_SHA_SEP_FILE = "file"
     FILE_SHA_LABEL = "label"
 
-    GB_FILES_FILE = 'gravitybee-files.json'
+    GB_FILES_FILE = os.path.join('.gravitybee', 'gravitybee-files.json')
+    GB_INFO_FILE = os.path.join('.gravitybee', 'gravitybee-info.json')
+    MAX_UPLOAD_ATTEMPTS = 3
+
+    HASH_FILE = "$platform-sha256.json"
 
     PER_PAGE = 1000
 
@@ -213,11 +214,11 @@ class Arguments(object):
         self.gb_info = None
         self.gb_subs = {}
 
-        if os.path.exists(satsuki.GB_INFO_FILE):
+        if os.path.exists(Arguments.GB_INFO_FILE):
             satsuki.verboseprint("Setting up variable substitution...")
 
             # open gravitybee info file and use app version
-            info_file = open(satsuki.GB_INFO_FILE, "r")
+            info_file = open(Arguments.GB_INFO_FILE, "r")
             self.gb_info = json.loads(info_file.read())
             info_file.close()
 
@@ -526,7 +527,7 @@ class Arguments(object):
                     )
 
             if self.file_sha == Arguments.FILE_SHA_SEP_FILE:
-                sha_filename = Template(satsuki.HASH_FILE).safe_substitute({
+                sha_filename = Template(Arguments.HASH_FILE).safe_substitute({
                     'platform':platform.system().lower()
                 })
 
@@ -914,7 +915,7 @@ class ReleaseMgr(object):
 
         error = ConnectionError
 
-        while attempts < satsuki.MAX_UPLOAD_ATTEMPTS and not success:
+        while attempts < Arguments.MAX_UPLOAD_ATTEMPTS and not success:
             
             attempts += 1
 
@@ -933,7 +934,7 @@ class ReleaseMgr(object):
             satsuki.verboseprint("Uploading file:", file_info['filename'])
             satsuki.verboseprint(
                 "Attempt:", 
-                str(attempts) + '/' + str(satsuki.MAX_UPLOAD_ATTEMPTS)
+                str(attempts) + '/' + str(Arguments.MAX_UPLOAD_ATTEMPTS)
             )
 
             try:

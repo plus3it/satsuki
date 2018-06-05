@@ -7,7 +7,7 @@ import github
 import platform
 import requests
 
-from satsuki import Arguments, ReleaseMgr, HASH_FILE
+from satsuki import Arguments, ReleaseMgr
 from string import Template
 
 TEST_VERBOSE = True
@@ -103,7 +103,7 @@ def test_download_file_no_sha(token):
     repo = gh.get_repo(TEST_SLUG, lazy=False)
     release = repo.get_release(TEST_TAG)
     asset_list = release.get_assets()
-    sha_filename = Template(HASH_FILE).safe_substitute({
+    sha_filename = Template(Arguments.HASH_FILE).safe_substitute({
         'platform': platform.system().lower()
     })
 
@@ -168,7 +168,7 @@ def test_download_file(token):
     repo = gh.get_repo(TEST_SLUG, lazy=False)
     release = repo.get_release(TEST_TAG)
     asset_list = release.get_assets()
-    sha_filename = Template(HASH_FILE).safe_substitute({
+    sha_filename = Template(Arguments.HASH_FILE).safe_substitute({
         'platform': platform.system().lower()
     })
 
