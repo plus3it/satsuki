@@ -28,7 +28,7 @@ import platform
 
 from string import Template
 
-__version__ = "0.1.10"
+__version__ = "0.1.11"
 VERBOSE_MESSAGE_PREFIX = "[Satsuki]"
 EXIT_OK = 0
 
