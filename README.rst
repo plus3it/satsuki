@@ -95,7 +95,6 @@ values from GravityBee.  See **Variable Substitution** below.
       - export SATS_TAG=$(grep "version = " $TRAVIS_BUILD_DIR/setup.cfg | sed "s/version = //")
       - export SATS_BODY="* Here is the message for the release"
       - export SATS_FILE="mysuperapp-1.2.3-standalone-linux-x86_64"
-      - git tag -a $SATS_TAG -m "This is the v$SATS_TAG message"
 
 
 **Step 5: Setup the Travis YAML Deploy Step**
@@ -360,8 +359,8 @@ This is an example of the format.
       'path': '/path/to/file/gbtestapp-4.2.6-standalone-osx-x86_64'}]
 
 
-Examples
---------
+Command-Line Examples
+---------------------
 
 Here is an example of using Satsuki to clean up tags.
 This command will delete all tags not connected to a release that

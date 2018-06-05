@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.1.11 - 2018.06.05
+-------------------
+* [ENHANCEMENT] Updated for compatibility with GravityBee's
+  new directory structure (using ``.gravitybee`` directory).
+
 0.1.10 - 2018.05.25
 -------------------
 * [ENHANCEMENT] Updated for compatibility with GravityBee.
