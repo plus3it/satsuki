@@ -1,7 +1,10 @@
-import pytest
+"""TODO: docstring"""
+
 
 def pytest_addoption(parser):
+    """TODO: docstring"""
     parser.addoption("--token", action="store", default=None)
+
 
 def pytest_generate_tests(metafunc):
     """
