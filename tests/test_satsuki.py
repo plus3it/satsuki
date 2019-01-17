@@ -1,14 +1,16 @@
+""" TODO: docstring"""
 # test_pyppyn.py
 
-import pytest
+
 import uuid
 import os
-import github
 import platform
+from string import Template
+import pytest
 import requests
+import github
 
 from satsuki import Arguments, ReleaseMgr
-from string import Template
 
 TEST_VERBOSE = True
 TEST_BODY = str(uuid.uuid1())
@@ -21,6 +23,7 @@ TEST_DOWNLOAD = 'tests/downloaded-asset'
 TEST_DOWNLOAD_SHA = 'tests/downloaded-asset-sha'
 TEST_RECREATE_COMMITISH = "6ba16ceff2efa08fa01c1471c739a6febc2343b6"
 
+
 def test_blank_arguments():
     """ Returns an Arguments instance with nothing set. """
     with pytest.raises(PermissionError):
@@ -31,24 +34,26 @@ def test_blank_arguments():
 def arguments_base(token):
     """ Basic arguments with authorization (must provide token) """
     return Arguments(
-        verbose = TEST_VERBOSE,
-        token = token,
-        slug = TEST_SLUG,
-        tag = TEST_TAG,
-        body = TEST_BODY,
-        rel_name = TEST_REL_NAME,
-        commitish = TEST_COMMITISH
+        verbose=TEST_VERBOSE,
+        token=token,
+        slug=TEST_SLUG,
+        tag=TEST_TAG,
+        body=TEST_BODY,
+        rel_name=TEST_REL_NAME,
+        commitish=TEST_COMMITISH
     )
 
 
+@pytest.fixture
 def test_create_release(arguments_base):
-    rm = ReleaseMgr(arguments_base)
-    rm.execute() # <== should create
+    """ TODO: docstring"""
+    r_m = ReleaseMgr(arguments_base)
+    r_m.execute()  # <== should create
     compare_args = Arguments(
-        verbose = TEST_VERBOSE,
-        token = arguments_base.api_token,
-        slug = TEST_SLUG,
-        tag = TEST_TAG
+        verbose=TEST_VERBOSE,
+        token=arguments_base.api_token,
+        slug=TEST_SLUG,
+        tag=TEST_TAG
     )
 
     assert compare_args.body == TEST_BODY \
@@ -56,13 +61,14 @@ def test_create_release(arguments_base):
 
 
 def test_get_latest(arguments_base):
-    rm = ReleaseMgr(arguments_base)
-    rm.execute() # <== should create
+    """TODO: docstring """
+    r_m = ReleaseMgr(arguments_base)
+    r_m.execute()  # <== should create
     compare_args = Arguments(
-        verbose = TEST_VERBOSE,
-        token = arguments_base.api_token,
-        slug = TEST_SLUG,
-        latest = True
+        verbose=TEST_VERBOSE,
+        token=arguments_base.api_token,
+        slug=TEST_SLUG,
+        latest=True
     )
 
     if compare_args.tag == TEST_TAG:
@@ -75,15 +81,16 @@ def test_get_latest(arguments_base):
 
 
 def test_upload_file_no_sha(token):
+    """TODO: docstring"""
     with open(TEST_FILENAME, 'wb') as fout:
         fout.write(os.urandom(1024000))
 
     args = Arguments(
-        verbose = TEST_VERBOSE,
-        token = token,
-        slug = TEST_SLUG,
-        tag = TEST_TAG,
-        files_file = "tests/test.file"
+        verbose=TEST_VERBOSE,
+        token=token,
+        slug=TEST_SLUG,
+        tag=TEST_TAG,
+        files_file="tests/test.file"
     )
 
     ul_rel = ReleaseMgr(args)
@@ -99,8 +106,8 @@ def test_download_file_no_sha(token):
 
     # github => repo => release => asset_list => asset => url => download
 
-    gh = github.Github(token, per_page=100)
-    repo = gh.get_repo(TEST_SLUG, lazy=False)
+    g_h = github.Github(token, per_page=100)
+    repo = g_h.get_repo(TEST_SLUG, lazy=False)
     release = repo.get_release(TEST_TAG)
     asset_list = release.get_assets()
     sha_filename = Template(Arguments.HASH_FILE).safe_substitute({
@@ -121,34 +128,36 @@ def test_download_file_no_sha(token):
 
 # Order is important, no sha tests upload, recreate gets rid of upload,
 # and then upload can be done again
+
 def test_recreate_release(arguments_base):
-    
+    """TODO: docstring"""
     recreate_args = Arguments(
-        verbose = TEST_VERBOSE,
-        token = arguments_base.api_token,
-        slug = TEST_SLUG,
-        tag = TEST_TAG,
-        recreate = True,
-        commitish = TEST_RECREATE_COMMITISH
+        verbose=TEST_VERBOSE,
+        token=arguments_base.api_token,
+        slug=TEST_SLUG,
+        tag=TEST_TAG,
+        recreate=True,
+        commitish=TEST_RECREATE_COMMITISH
     )
     new = ReleaseMgr(recreate_args)
-    new.execute() # <== should recreate
+    new.execute()  # <== should recreate
 
     # really the test is if it makes it this far
     assert recreate_args.target_commitish == TEST_RECREATE_COMMITISH
 
 
 def test_upload_file(token):
+    """TODO: docstring"""
     with open(TEST_FILENAME, 'wb') as fout:
         fout.write(os.urandom(1024000))
 
     args = Arguments(
-        verbose = TEST_VERBOSE,
-        token = token,
-        slug = TEST_SLUG,
-        tag = TEST_TAG,
-        files_file = "tests/test.file",
-        file_sha = Arguments.FILE_SHA_SEP_FILE
+        verbose=TEST_VERBOSE,
+        token=token,
+        slug=TEST_SLUG,
+        tag=TEST_TAG,
+        files_file="tests/test.file",
+        file_sha=Arguments.FILE_SHA_SEP_FILE
     )
 
     ul_rel = ReleaseMgr(args)
@@ -164,8 +173,8 @@ def test_download_file(token):
 
     # github => repo => release => asset_list => asset => url => download
 
-    gh = github.Github(token, per_page=100)
-    repo = gh.get_repo(TEST_SLUG, lazy=False)
+    g_h = github.Github(token, per_page=100)
+    repo = g_h.get_repo(TEST_SLUG, lazy=False)
     release = repo.get_release(TEST_TAG)
     asset_list = release.get_assets()
     sha_filename = Template(Arguments.HASH_FILE).safe_substitute({
@@ -181,30 +190,30 @@ def test_download_file(token):
         if check_asset.name == os.path.basename(TEST_FILENAME):
 
             # the uploaded asset
-            r = requests.get(check_asset.browser_download_url)
-            open(TEST_DOWNLOAD, 'wb').write(r.content)
-            
+            request = requests.get(check_asset.browser_download_url)
+            open(TEST_DOWNLOAD, 'wb').write(request.content)
+
             # recalc hash of downloaded file
-            assets_calculated_sha = Arguments.get_hash(TEST_DOWNLOAD)                
+            assets_calculated_sha = Arguments.get_hash(TEST_DOWNLOAD)
 
         elif check_asset.name == sha_filename:
 
             # the sha hash file
-            r = requests.get(check_asset.browser_download_url)
-            sha_dict = r.json()
+            request = requests.get(check_asset.browser_download_url)
+            sha_dict = request.json()
 
     assert assets_calculated_sha == sha_dict[os.path.basename(TEST_FILENAME)]
 
 
 def test_delete_release(token):
-
+    """TODO: docstring"""
     delete_args = Arguments(
-        verbose = TEST_VERBOSE,
-        token = token,
-        slug = TEST_SLUG,
-        tag = TEST_TAG,
-        command = Arguments.COMMAND_DELETE,
-        include_tag = True
+        verbose=TEST_VERBOSE,
+        token=token,
+        slug=TEST_SLUG,
+        tag=TEST_TAG,
+        command=Arguments.COMMAND_DELETE,
+        include_tag=True
     )
 
     del_rel = ReleaseMgr(delete_args)
