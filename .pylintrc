@@ -1,0 +1,14 @@
+[MESSAGES CONTROL]
+disable=
+    invalid-name,
+    attribute-defined-outside-init,
+    redefined-outer-name,
+    too-many-lines,
+    protected-access,
+    pointless-string-statement,
+    broad-except,
+    redefined-builtin,
+    too-many-branches,
+    too-few-public-methods,
+    too-many-statements,
+    import-self

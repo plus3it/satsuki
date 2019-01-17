@@ -16,8 +16,6 @@ Example:
 """
 
 import os
-import github
-import satsuki
 import json
 import glob
 import subprocess
@@ -25,13 +23,15 @@ import fnmatch
 import hashlib
 import socket
 import platform
-
 from string import Template
+import github
+import satsuki
 
 __version__ = "0.1.11"
 VERBOSE_MESSAGE_PREFIX = "[Satsuki]"
 EXIT_OK = 0
 
+#pylint: disable=invalid-name
 verbose = False
 pyppy = None
 verboseprint = lambda *a, **k: \
@@ -46,8 +46,8 @@ def _error(message, exception):
     raise exception
 
 
-
-class Arguments(object):
+#pylint: disable=too-few-public-methods, too-many-instance-attributes
+class Arguments:
     """
     A class representing the configuration information needed by the
     satsuki.ReleaseMgr class.
@@ -130,9 +130,7 @@ class Arguments(object):
                 for chunk in iter(lambda: f.read(4096), b""):
                     sha256.update(chunk)
             return sha256.hexdigest()
-        else:
-            return None
-
+        return None
 
     def _init_basic(self):
         """
@@ -141,7 +139,7 @@ class Arguments(object):
         """
 
         # auth - required
-        self.api_token = self.kwargs.get('token',None)
+        self.api_token = self.kwargs.get('token', None)
         if self.api_token is None:
             satsuki._error(
                 "No GitHub API token was provided.",
@@ -149,7 +147,7 @@ class Arguments(object):
             )
 
         # user command
-        if not self.kwargs.get('command',False):
+        if not self.kwargs.get('command', False):
             self.user_command = Arguments.COMMAND_UPSERT
         elif self.kwargs.get('command') == Arguments.COMMAND_UPSERT or \
             self.kwargs.get('command') == Arguments.COMMAND_DELETE:
@@ -160,7 +158,7 @@ class Arguments(object):
                 AttributeError
             )
 
-        self.force = self.kwargs.get('force',False)
+        self.force = self.kwargs.get('force', False)
 
         # slug or repo / user - required
         self.slug = self.kwargs.get(
@@ -176,7 +174,7 @@ class Arguments(object):
 
         if isinstance(self.slug, str) and '/' not in self.slug:
 
-            satsuki.verboseprint("Invalid repo slug:",self.slug)
+            satsuki.verboseprint("Invalid repo slug:", self.slug)
             self.slug = None
 
         self.repo = self.kwargs.get('repo', None)
@@ -202,7 +200,7 @@ class Arguments(object):
                     None
                 )
             )
-        )            
+        )
 
 
     def _init_gb_info(self):
@@ -222,14 +220,14 @@ class Arguments(object):
             self.gb_info = json.loads(info_file.read())
             info_file.close()
 
-            if self.gb_info.get('app_version',None) is not None:
+            if self.gb_info.get('app_version', None) is not None:
                 self.gb_subs['gb_pkg_ver'] = self.gb_info['app_version']
 
-            if self.gb_info.get('app_name',None) is not None:
+            if self.gb_info.get('app_name', None) is not None:
                 self.gb_subs['gb_pkg_name'] = self.gb_info['app_name']
                 self.gb_subs['gb_pkg_name_lower'] = self.gb_info['app_name'].lower()
 
-            if self.gb_info.get('gen_file',None) is not None:
+            if self.gb_info.get('gen_file', None) is not None:
                 self.gb_subs['gb_sa_app'] = self.gb_info['gen_file']
 
             satsuki.verboseprint("Available substitutions: ", self.gb_subs)
@@ -281,7 +279,7 @@ class Arguments(object):
         """
 
         # find out if we can get a release (need tag or latest)
-        self.latest = self.kwargs.get('latest',False)
+        self.latest = self.kwargs.get('latest', False)
 
         # tag - required (or latest)
         self.tag = self.kwargs.get('tag', None)
@@ -309,7 +307,7 @@ class Arguments(object):
 
         self.include_tag = self.kwargs.get('include_tag', False)
         if self.recreate:
-            self.include_tag = True        
+            self.include_tag = True
 
 
     def _find_tag(self):
@@ -346,8 +344,8 @@ class Arguments(object):
 
             # good to: delete, update
             if self.user_command == Arguments.COMMAND_UPSERT:
-                
-                # now the question is, is there a commitish and 
+
+                # now the question is, is there a commitish and
                 # is it different than the existing one
                 self._working_tag = self._find_tag()
 
@@ -357,19 +355,19 @@ class Arguments(object):
                     and self._working_tag.commit.sha != self.target_commitish \
                     and self.recreate:
                     satsuki.verboseprint(
-                        "Same tag names:", 
-                        self.working_release.tag_name, 
+                        "Same tag names:",
+                        self.working_release.tag_name,
                         self._working_tag.name)
                     satsuki.verboseprint(
-                        "Different commitishes:", 
-                        self.target_commitish, 
+                        "Different commitishes:",
+                        self.target_commitish,
                         self._working_tag.commit)
-                    
+
                     self.internal_command = Arguments._COMMAND_RECREATE
                 else:
                     self.internal_command = Arguments._COMMAND_UPDATE
 
-            elif len(self.file_info) > 0 \
+            elif (self.file_info) \
                 and self.user_command == Arguments.COMMAND_DELETE:
                 self.internal_command = Arguments._COMMAND_DELETE_FILE
             else:
@@ -398,10 +396,11 @@ class Arguments(object):
         new_files: list of str of filenames potentially glob expanded
             which is fed back into self.file_info
         preprocessed_files: list of dicts of file after added sha
-            hashes and filtering out non-existent files, which 
+            hashes and filtering out non-existent files, which
             then replaces self.file_info
         """
 
+        #pylint: disable=too-many-branches, too-many-statements
         self.files = self.kwargs.get('file', [])
         self.labels = self.kwargs.get('label', [])
         self.mimes = self.kwargs.get('mime', [])
@@ -421,18 +420,17 @@ class Arguments(object):
         # handle the GravityBee files_file
         if os.path.exists(Arguments.GB_FILES_FILE) \
             and self.user_command == Arguments.COMMAND_UPSERT:
-            # merge into file_info      
+            # merge into file_info
             files_file = open(Arguments.GB_FILES_FILE, "r")
             self.file_info += json.loads(files_file.read())
-            files_file.close()       
+            files_file.close()
 
         # handle the command line files, et al.
 
         # if there are files, we'll set up a list of dicts with info
         # about each. if there's one label, it will be applied to all
         # files. same for mimes.
-        if len(self.files) > 0:
-
+        if self.files:
             satsuki.verboseprint("Processing command-line files:", len(self.files))
 
             if len(self.files) != len(self.labels) \
@@ -464,7 +462,7 @@ class Arguments(object):
                     info = {}
                     info['filename'] = os.path.basename(filename)
                     info['path'] = filename
-                    if len(self.labels) > 0:
+                    if self.labels:
 
                         if len(self.labels) == 1:
                             info['label'] = Template(self.labels[0]).safe_substitute(self.gb_subs)
@@ -475,7 +473,7 @@ class Arguments(object):
 
                         info['label'] = info['filename']
 
-                    if len(self.mimes) > 0:
+                    if self.mimes:
                         if len(self.mimes) == 1:
                             info['mime-type'] = self.mimes[0]
                         else:
@@ -498,7 +496,7 @@ class Arguments(object):
                     self.file_info.append(info)
 
         # processing for all files regardless of provenance
-        if len(self.file_info) > 0 \
+        if (self.file_info) \
             and self.user_command == Arguments.COMMAND_UPSERT:
 
             preprocessed_files = [] # will replace self.file_info
@@ -531,12 +529,12 @@ class Arguments(object):
                     'platform':platform.system().lower()
                 })
 
-                sha_file = open(sha_filename,'w')
+                sha_file = open(sha_filename, 'w')
                 sha_file.write(json.dumps(sha_dict))
                 sha_file.close()
 
                 # add the sha hash file to the list of uploads
-                if len(self.file_info) > 0:
+                if self.file_info:
 
                     info = {}
                     info['filename'] = sha_filename
@@ -556,7 +554,7 @@ class Arguments(object):
 
             self.file_info = preprocessed_files
 
-        if len(self.files) > 0 and len(self.file_info) == 0:
+        if (self.files) and (self.file_info):
             satsuki._error(
                 "File flag used but no matching files were found",
                 AttributeError
@@ -587,7 +585,7 @@ class Arguments(object):
         # use templates for body and rel_name if necessary
         self.body = self.kwargs.get('body', None)
 
-        if self.body == None:
+        if self.body is None:
             # use existing value if none given
             self.body = self.working_release.body
         else:
@@ -596,7 +594,7 @@ class Arguments(object):
 
         self.rel_name = self.kwargs.get('rel_name', None)
 
-        if self.rel_name == None:
+        if self.rel_name is None:
             # use existing value if none given
             self.rel_name = self.working_release.title
         else:
@@ -618,7 +616,7 @@ class Arguments(object):
         # use templates for body and rel_name if necessary
         self.body = self.kwargs.get('body', None)
 
-        if self.body == None:
+        if self.body is None:
             # use existing value if none given
             self.body = "Release " + self.tag
         else:
@@ -627,7 +625,7 @@ class Arguments(object):
 
         self.rel_name = self.kwargs.get('rel_name', None)
 
-        if self.rel_name == None:
+        if self.rel_name is None:
             # use existing value if none given
             self.rel_name = self.tag
         else:
@@ -644,23 +642,23 @@ class Arguments(object):
         try:
             # verbosity
             satsuki.verboseprint("Arguments:")
-            satsuki.verboseprint("user command:",self.user_command)
-            satsuki.verboseprint("internal command:",self.internal_command)
-            satsuki.verboseprint("slug:",self.slug)
-            satsuki.verboseprint("tag:",self.tag)
+            satsuki.verboseprint("user command:", self.user_command)
+            satsuki.verboseprint("internal command:", self.internal_command)
+            satsuki.verboseprint("slug:", self.slug)
+            satsuki.verboseprint("tag:", self.tag)
 
             if hasattr(self, 'latest'):
-                satsuki.verboseprint("latest:",self.latest)
+                satsuki.verboseprint("latest:", self.latest)
             if hasattr(self, 'target_commitish'):
-                satsuki.verboseprint("target_commitish:",self.target_commitish)
+                satsuki.verboseprint("target_commitish:", self.target_commitish)
             if hasattr(self, 'rel_name'):
-                satsuki.verboseprint("rel_name:",self.rel_name)
+                satsuki.verboseprint("rel_name:", self.rel_name)
             if hasattr(self, 'body'):
-                satsuki.verboseprint("body:",self.body)
+                satsuki.verboseprint("body:", self.body)
             if hasattr(self, 'pre'):
-                satsuki.verboseprint("pre:",self.pre)
+                satsuki.verboseprint("pre:", self.pre)
             if hasattr(self, 'draft'):
-                satsuki.verboseprint("draft:",self.draft)
+                satsuki.verboseprint("draft:", self.draft)
 
             satsuki.verboseprint("# files:", len(self.file_info))
             satsuki.verboseprint("SHA256 for files: ", self.file_sha)
@@ -680,19 +678,19 @@ class Arguments(object):
                             "sha256:",
                             info['sha256']
                         )
-
+        #pylint: disable=broad-except
         except Exception as err:
             satsuki.verboseprint("Verbosity problem:", err)
 
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, **kwargs):
         """
         Starts the initialization process by calling helper
         initialization methods.
         """
 
         # Remove unused options
-        empty_keys = [k for k,v in kwargs.items() if not v]
+        empty_keys = [k for k, v in kwargs.items() if not v]
         for k in empty_keys:
             del kwargs[k]
 
@@ -705,7 +703,7 @@ class Arguments(object):
         self.kwargs = kwargs
 
         # package level
-        satsuki.verbose = kwargs.get('verbose',False)
+        satsuki.verbose = kwargs.get('verbose', False)
 
         # helper inits
         self._init_basic()
@@ -727,8 +725,8 @@ class Arguments(object):
             "No internal command, user command: " + self.user_command
 
 
-
-class ReleaseMgr(object):
+#pylint: disabled-too-few-public-methods
+class ReleaseMgr:
     """
     Utility class for managing GitHub releases.
 
@@ -762,7 +760,7 @@ class ReleaseMgr(object):
         Creates a new release.
         """
 
-        satsuki.verboseprint("Creating release:",self.args.rel_name)
+        satsuki.verboseprint("Creating release:", self.args.rel_name)
         if isinstance(self.args.tag, int):
             # PyGithub will treat it as a release id when finding later
             satsuki._error(
@@ -774,7 +772,7 @@ class ReleaseMgr(object):
                 "Commit SHA is required",
                 AttributeError
             )
-
+        #pylint: disable=pointless-string-statement
         """
         Call to PyGithub:
         tag, name, message, draft=False, prerelease=False,
@@ -801,7 +799,7 @@ class ReleaseMgr(object):
             "Updating release, id:",
             self.args.working_release.id
         )
-
+        #pylint: disable=pointless-string-statement
         """
         Call to PyGithub:
         name, message, draft=False, prerelease=False
@@ -815,7 +813,7 @@ class ReleaseMgr(object):
             prerelease=self.args.pre
         )
 
-
+    #pylint: disable=redefined-builtin
     def _find_release_asset(self, id):
         """
         Finds a release asset associated with a release. Since no
@@ -832,7 +830,7 @@ class ReleaseMgr(object):
         """
         satsuki.verboseprint("Finding asset:", id)
 
-        # get asset list 
+        # get asset list
         satsuki.verboseprint("Getting asset list")
         self.args._asset_list = self.args.working_release.get_assets()
 
@@ -874,13 +872,13 @@ class ReleaseMgr(object):
 
     def _handle_upload_error(self, error, file_info, complete_filesize):
 
-        satsuki.verboseprint("Upload error!")    
-        satsuki.verboseprint("Error:", type(error), error)   
-        
-        if type(error) in (
-            BrokenPipeError, 
-            socket.timeout, 
-            ConnectionAbortedError
+        satsuki.verboseprint("Upload error!")
+        satsuki.verboseprint("Error:", type(error), error)
+
+        if isinstance(error) in (
+                BrokenPipeError,
+                socket.timeout,
+                ConnectionAbortedError
         ):
             # possible non errors
             satsuki.verboseprint("This may be an inconsequential error...")
@@ -892,10 +890,10 @@ class ReleaseMgr(object):
                 and release_asset.size == complete_filesize:
                 satsuki.verboseprint("File uploaded correctly")
                 return release_asset
-        
+
         return None
 
-
+    #pylint: disable=too-many-branches
     def _upload_file(self, file_info):
         """
         Upload an individual file to the release.
@@ -906,9 +904,9 @@ class ReleaseMgr(object):
         # path, label="", content_type=""
         complete_filesize = os.path.getsize(file_info['path'])
         satsuki.verboseprint(
-            "Size of", 
-            file_info['filename'], 
-            ":", 
+            "Size of",
+            file_info['filename'],
+            ":",
             complete_filesize)
         attempts = 0
         success = False
@@ -916,7 +914,7 @@ class ReleaseMgr(object):
         error = ConnectionError
 
         while attempts < Arguments.MAX_UPLOAD_ATTEMPTS and not success:
-            
+
             attempts += 1
 
             upload_args = {}
@@ -933,7 +931,7 @@ class ReleaseMgr(object):
 
             satsuki.verboseprint("Uploading file:", file_info['filename'])
             satsuki.verboseprint(
-                "Attempt:", 
+                "Attempt:",
                 str(attempts) + '/' + str(Arguments.MAX_UPLOAD_ATTEMPTS)
             )
 
@@ -953,23 +951,23 @@ class ReleaseMgr(object):
                 # might be able to remove when PR #771 is merged
                 # https://github.com/PyGithub/PyGithub/pull/771
                 self.args._get_release()
-            
+
             if error is None \
                 and hasattr(release_asset, 'size') \
                 and release_asset.size == complete_filesize:
                 success = True
-            
+
             else:
                 release_asset = self._handle_upload_error(
-                    error, 
-                    file_info, 
+                    error,
+                    file_info,
                     complete_filesize
-                )         
-            
+                )
+
                 if release_asset is not None:
                     success = True
 
-        # attempts are done... 
+        # attempts are done...
 
         if success:
 
@@ -1010,7 +1008,7 @@ class ReleaseMgr(object):
         Deletes a file (i.e., release asset) from a release.
         """
 
-        satsuki.verboseprint("Deleting release asset:",self.args.tag)
+        satsuki.verboseprint("Deleting release asset:", self.args.tag)
         for info in self.args.file_info:
             asset = self._find_release_asset(info['filename'])
             if asset is not None:
@@ -1022,7 +1020,7 @@ class ReleaseMgr(object):
         Deletes a release.
         """
 
-        satsuki.verboseprint("Deleting release:",self.args.tag)
+        satsuki.verboseprint("Deleting release:", self.args.tag)
 
         # delete release
         self.args.working_release.delete_release()
@@ -1033,7 +1031,7 @@ class ReleaseMgr(object):
         """
         if self.args.internal_command == Arguments._COMMAND_DELETE_TAG \
             or self.args.include_tag:
-            satsuki.verboseprint("Cleaning tag(s):",self.args.tag)
+            satsuki.verboseprint("Cleaning tag(s):", self.args.tag)
 
             tag_list = self.args.repo.get_tags()
             for tag in tag_list:
@@ -1050,7 +1048,7 @@ class ReleaseMgr(object):
 
                         else:
                             satsuki.verboseprint("Tag still connected to "
-                                + "release - not deleting:", tag.name)
+                                                 + "release - not deleting:", tag.name)
 
                     except github.UnknownObjectException as err:
 
@@ -1059,30 +1057,30 @@ class ReleaseMgr(object):
                         satsuki.verboseprint("Deleting local tag:", tag.name)
                         try:
                             subprocess.run([
-                                    'git',
-                                    'tag',
-                                    '--delete',
-                                    tag.name
+                                'git',
+                                'tag',
+                                '--delete',
+                                tag.name
                                 ],
-                                check=True
-                            )
-                        except Exception as err:
-                            satsuki.verboseprint("Trouble deleting local tag:",err)
+                                           check=True
+                                          )
+                        except Exception as err:   #pylint: disable=broad-except
+                            satsuki.verboseprint("Trouble deleting local tag:", err)
 
                         # delete the remote tag (if any)
                         satsuki.verboseprint("Deleting remote tag:", tag.name)
                         try:
                             subprocess.run([
-                                    'git',
-                                    'push',
-                                    '--delete',
-                                    'origin',
-                                    tag.name
+                                'git',
+                                'push',
+                                '--delete',
+                                'origin',
+                                tag.name
                                 ],
-                                check=True
-                            )
-                        except Exception as err:
-                            satsuki.verboseprint("Trouble deleting remote tag:",err)
+                                           check=True
+                                          )
+                        except Exception as err:   #pylint: disable=broad-except
+                            satsuki.verboseprint("Trouble deleting remote tag:", err)
 
     def execute(self):
         """
@@ -1099,7 +1097,7 @@ class ReleaseMgr(object):
             self._delete_tag()
         elif self.args.internal_command == Arguments._COMMAND_RECREATE:
             self._delete_release()
-            self._delete_tag()            
+            self._delete_tag()
             self._create_release()
             self._upload_files()
         elif self.args.internal_command == Arguments._COMMAND_CREATE:
@@ -1108,4 +1106,3 @@ class ReleaseMgr(object):
         elif self.args.internal_command == Arguments._COMMAND_UPDATE:
             self._update_release()
             self._upload_files()
-
