@@ -6,8 +6,8 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
-click = "*"
-pygithub = "*"
-requests = "*"
+click = "==7.0"
+PyGithub = "==1.43.4"
+requests = "==2.21.0"
 
 [requires]
