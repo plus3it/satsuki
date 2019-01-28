@@ -8,6 +8,9 @@ Satsuki
 .. image:: https://travis-ci.org/YakDriver/satsuki.svg?branch=master
     :target: http://travis-ci.org/YakDriver/satsuki
     :alt: Build Status
+.. image:: https://ci.appveyor.com/api/projects/status/r3rr8moksjihbmm7?svg=true
+    :target: https://github.com/YakDriver/satsuki
+    :alt: Build Status
 .. image:: https://img.shields.io/pypi/pyversions/satsuki.svg
     :target: https://pypi.python.org/pypi/satsuki
     :alt: Python Version Compatibility

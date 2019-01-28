@@ -17,6 +17,8 @@ install:
 script:
   - pytest --token $SATS_TOKEN
 jobs:
+  allow_failures:
+    - os: windows
   include:
     - stage: lint
       python: 3.6
@@ -35,13 +37,14 @@ jobs:
       os: windows
       language: sh
       python: 3.7
-      filter_secrets: false
       before_install:
         - choco install python3
         - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
         - python -m pip install virtualenv
         - virtualenv $HOME/venv
         - source $HOME/venv/Scripts/activate
+        - git remote rm origin
+        - git remote add origin https://satsuki-tests:$SATS_TOKEN@github.com/YakDriver/satsuki-tests.git
       install:
         - python -m pip install -r requirements/pip.txt
         - python -m pip install -r requirements/test.txt

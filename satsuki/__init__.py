@@ -25,6 +25,7 @@ import os
 import platform
 import socket
 import subprocess
+import time
 
 from string import Template
 
@@ -758,7 +759,8 @@ class ReleaseMgr():
         logger.warning("Error (%s): %s", type(upload_error), upload_error)
 
         if isinstance(upload_error, (
-                BrokenPipeError, socket.timeout, ConnectionAbortedError)):
+                github.GithubException, BrokenPipeError,
+                socket.timeout, ConnectionAbortedError)):
             # possible non errors
             logger.info("This may be an inconsequential error...")
 
@@ -783,6 +785,7 @@ class ReleaseMgr():
         upload_error = ConnectionError
 
         while attempts < Arguments.MAX_UPLOAD_ATTEMPTS and not success:
+            time.sleep(30 * attempts)
             attempts += 1
             upload_args = {}
             if file_info['label'] is None:
@@ -805,10 +808,9 @@ class ReleaseMgr():
                 self.release_asset = self.args.working_release.upload_asset(
                     file_info['path'], **upload_args)
             except (
-                    BrokenPipeError, socket.timeout,
+                    BrokenPipeError, socket.timeout, github.GithubException,
                     ConnectionError, ConnectionAbortedError) as exc:
                 upload_error = exc
-
             finally:
                 # fix for PyGithub issue, renew the repo
                 # might be able to remove when PR #771 is merged
@@ -819,7 +821,6 @@ class ReleaseMgr():
                     and hasattr(self.release_asset, 'size') \
                     and self.release_asset.size == complete_filesize:
                 success = True
-
             elif self._handle_upload_error(
                     upload_error, file_info, complete_filesize):
                 success = True
