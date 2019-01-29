@@ -8,6 +8,8 @@ tests/release-asset*
 tests/downloaded*
 *sha256.json
 
+.vscode/
+
 # C extensions
 *.so
 

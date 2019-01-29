@@ -1,6 +1,12 @@
 CHANGE LOG
 ==========
 
+0.1.12 - 2019.01.25
+-------------------
+* [ENHANCEMENT] Code clean up.
+* [ENHANCEMENT] Add pylint, flake8 to CI.
+* [ENHANCEMENT] Revamp Travis CI to test Windows, Mac, Linux.
+
 0.1.11 - 2018.06.05
 -------------------
 * [ENHANCEMENT] Updated for compatibility with GravityBee's

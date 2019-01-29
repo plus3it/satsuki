@@ -1,73 +1,123 @@
 language: python
-sudo: false
+stages:
+  - lint
+  - test
+  - deploy
 python:
   - "3.5"
   - "3.6"
-env:
-  global:
-    - secure: oaJ4/I5yYkryQW2ANWkefp6PwmdGk5L0g5BdSxnGQiH8jdsqS30Nd0LmbUzkklDigaiTb9UIvrPQdrx+tHXoPsyaT6UXr0YRvht1vw4gbDt61+ECWuFgcTECX0A9U/JrDXonaKmeu5UZEpCNrAgAQR1ZsMGaJ2QpVfBtpQZUdwCAPBchFLheK2yr54dzCG9s4yZHJWculTja5rTb/mIqRfze3EIxX5sGjyDYNEVfvqwCu729pO9xd8ZaP1TZtQzltgfSzkMH6/cnzgGLPfKV7yWsJFj0AYOilvcc+XLfgfO76fA4qhchYJJog9+CWTdE48VA0v53YlIud70yPKucTE795zDsLsUqz8FIEYcMNrzm0jKIHp6AZK7MEq6VzRnjmBdgJX2UaHNsKr+0KcM+zbhwMJ3ABMKq3mtjcRnWEkmjwgLdH+DrDhZK/SWIlpVCU1blbiArgHhaGisfyLIHG4406O1Nw+dTrp+HmDU5MsUGp5S6eo7TS/lkTj/11hqDQcjfcReHPqFqUobOvjBEV7jpEgGWUeM2wwf/IGKLbI8A8vGh84Ki9I7v1RPjm2C4GRAPUMdSfbekLTbSyPv3Ul2JmhyAx8tPHEiSe82hjhkiq5S+K6YRgZCPXkDo7kPmu7LY4hhnTpugQUrlhIqDzqxJZjcVpM1tzdoPV83FxLY=
+stage: test
+cache: pip
+before_cache:
+  - rm -f $HOME/.cache/pip/log/debug.log
 install:
-  - export SATS_DO_DEPLOY=yes
-  - |
-    if [[ $TRAVIS_TAG == Test* ]]; then
-      echo "No deployment because Test tag"
-      export SATS_DO_DEPLOY=no
-    fi
-  - |
-    if [ "$SATS_DO_DEPLOY" = "yes" ]; then
-      pip install --editable .
-    fi
+  - pip install -r requirements/pip.txt
+  - pip install -r requirements/test.txt
+  - pip install --editable .
 script:
-  - env
-  - |
-    if [ "$SATS_DO_DEPLOY" = "yes" ]; then
-      pytest --token $SATS_TOKEN
-    fi
-before_deploy:
-  - |
-    if [ "$TRAVIS_BRANCH" = "dev" ]; then
-      sed -i -E "s/^(version = )(.*)/\1\2.$TRAVIS_BUILD_NUMBER/" $TRAVIS_BUILD_DIR/setup.cfg
-    elif [ "$TRAVIS_BRANCH" = "master" ]; then
-      export RELEASE_VERSION=$(grep "version = " $TRAVIS_BUILD_DIR/setup.cfg | sed "s/version = //")
-      export RELEASE_BODY="* [satsuki v$RELEASE_VERSION CHANGELOG](https://github.com/YakDriver/satsuki/blob/$RELEASE_VERSION/CHANGELOG.rst)"
-    fi
-deploy:
-  - provider: pypi
-    server: https://test.pypi.org/legacy/
-    distributions: sdist bdist_wheel
-    user: YakDriver
-    password:
-      secure: ih5PPwkACCtewmcB5T61zCnrbDo+DpYsKKzesKbhPXLZIg8yxxecO7JEZ0aPo3wGVyIVwTs8jkTokfSKC2sfjS1pDi86X2mlss7ccHQAwwXcOkhijQr6QmMe0LgPRjXZuv8S186akFXmVcxhSI66ldrR9q5WBFx1vGRgtvweg2xdL/bBY/SkOPTr+S0CepB+vElDx9dpXQ+XyZiDmbvjtnT2VXklcNCa2k0UjTvSofadrtvO2sq9kDOZZpFpKZ1mPyvAkUYe5f7Rw2UmRNjUnSZu2y5Np5CwSLITf7oVn1wrdNLD6fvPDAbFASt1O2rwuG6drsT4TzPoR2XrPvxJFJyUAGvdSJnbPaEkk5HUGRbrPl5J15UibbO19tOPiRnfi30gxFqlWduBWWKqJFMe9WOo206BjZe4VB3+kW2GAOv7rNQKKf5frenMQkXtvpuRxzZ5bGKXKF027h5aDDz/cTPLHiMv8ApS9XXMuCE+9ArCjW+jDX/igqbEg/p1a6o+aSqzrTE8TVZT96tdGU16H5yNyDYt+Cn4fECWNruxPb+Xs28Et4fXoUtQ9AD5LGZcsA8bI77mAItHrR8Hg4JOu0Qgiaqd++bYD+ZntbkfySswcYvtr17W5w5R+QiWHjePw4P9U9XAtXcfoMaxOeEv1SsyMCNYFB6Ne4upamHuv4Q=
-    skip_cleanup: true
-    skip_upload_docs: true
-    on:
-      branch: dev
-      repo: YakDriver/satsuki
-      python: "3.6"
-      condition: $SATS_DO_DEPLOY = yes
-  - provider: releases
-    name: $RELEASE_VERSION
-    tag_name: $RELEASE_VERSION
-    target_commitish: $TRAVIS_COMMIT
-    body: $RELEASE_BODY
-    draft: false
-    skip_cleanup: true
-    api_key:
-      secure: Mj4uJ7DHHnihcVyi1kc1ZiNVVmKgGg4+6bIGfbqEmvIeKMom5PaR1l5ZnOHPcPkBROS+WkCNnr8AehljBtMIjuC7M4s5gSf9euTu4pzft3TS5qAgWwxw1SlI6LylvzEQG++to9C6WO9ioIlUbcbzfgUAGKlEgbNJ9EuWZ6l+WIDdPtbQ/7JBJkp8zi4DAEryeKyGnxc8w+iAkpXGdoQxXGp0mUcacQ3M5Z/luRQpf/qgkKGx5/sM72ufN7bO32sdNJp4GoY4BLTaQO5xGbPB/yWGU0qrrn+JTIy3foXdbzK0jqQXtrF2h/F80C0TIOksB6Kwx0qBksIUk61S3OBdTnCgDz5dElgwGcTgyc4DJn88uEKVksr/A0YJ+ypXhVUgypqMYke4pTdYstzwD5oPrVZ7NMUMJztz6a/uNt35AY/NWQqFPasjuDWbUypVbxdsriytZp8NdsfmDET/UGMwilgNfIapIQPu3R7Otv6KbGoNHhlM/vJ9rhBV6YlM/P2unFSQdT9HXOlEILbqBzR2jy+ytdUOcwSXU6rw+UyMeoHqjXqHTXpjoVK5gM/fCsvVngJKMPpyU387LnmUvfIYgObhD6FU/QIBVlixDRErVS6RDRICDXxncb8uyJLpqn4Ch3MzBZZ7D+irOI7/8F9z0/oaKR7uA9ObYDage85pm3A=
-    on:
-      branch: master
-      repo: YakDriver/satsuki
-      python: "3.6"
-      condition: $SATS_DO_DEPLOY = yes
-  - provider: pypi
-    distributions: sdist bdist_wheel
-    user: YakDriver
-    password:
-      secure: ZUVLJ4DisZzHEoj084tpILcIhzNptdMCfVpX/efSDPShS7poMEpFiM5wakZmUicuosDwI3LiIf87l6Y2CcBX5Mxc61Oo5Dhq2MFRYX08FSd3oNhamgHvz0dfhdXPs4/728+gkMALP0weq0d0rsmzwOlfr3unLsqeyqvu+lPj9ZZEMcuvaYz5pplQirtkoGivKelus9dZ+Kx8nX/utLbnt3GUddm3SofpuTUrWMPpjz4rnutjDxEeBHsCoKDqGq/eLQ0W5gdLIbginZd/Z0Nv5jEiz52UP02Kak4RCkk8BmYKdalnoecZNoLDSlurvJSFaVqu0tQDhv8+qXZlR+TPAlZHHoggnpSQPTqnrLAy17Qo3U8BWTyvIaD5q5PzGMy+Q8BJADCLeMbDKH4Ih9hR2ydDsI30tlGCM7sYbBOl/jRPMrvvgK31fCHwcDSlzmDKLEGE6EEBGT+FHQ6j8YOIlnsdq819M5p2kZzKeHDHhIeKdCtiPJOwltirjgaTiDEYAMS4ijGhc5etAZHEpV2nP5jkcK1bpZjw1u3DVaNZSJszFIZOwHLqoHTnNDm2vJ4MMN+2MTxsR7XvLTktQVCizEMKG3Xru39AZTJXAUGYeO09pmjZVBqAxok9FsiXJ3p5MY6DxQd7/55dMSVQJ7syxYXof7TAubi80ToJqjIAwFY=
-    skip_upload_docs: true
-    skip_cleanup: true
-    on:
-      tags: true
-      repo: YakDriver/satsuki
-      python: "3.6"
-      condition: $SATS_DO_DEPLOY = yes
+  - pytest --token $SATS_TOKEN
+jobs:
+  allow_failures:
+    - os: windows
+  include:
+    - stage: lint
+      python: 3.6
+      install:
+        - pip install -r requirements/pip.txt
+        - pip install -r requirements/lint.txt
+        - pip install --editable .
+      script:
+        - pylint satsuki
+        - pylint tests/*py
+        - flake8
+    - stage: test
+      python: 3.7
+      dist: xenial
+    - stage: test
+      os: windows
+      language: sh
+      python: 3.7
+      before_install:
+        - choco install python3
+        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+        - python -m pip install virtualenv
+        - virtualenv $HOME/venv
+        - source $HOME/venv/Scripts/activate
+        - git remote rm origin
+        - git remote add origin https://satsuki-tests:$SATS_TOKEN@github.com/YakDriver/satsuki-tests.git
+      install:
+        - python -m pip install -r requirements/pip.txt
+        - python -m pip install -r requirements/test.txt
+        - pip install --editable .
+    - stage: test
+      os: osx
+      osx_image: xcode10.1
+      language: sh
+      python: 3.7
+      # Perform the manual steps on osx to install python3 and activate venv
+      before_install:
+        - python3 -m pip install virtualenv
+        - virtualenv $HOME/venv -p python3
+        - source $HOME/venv/bin/activate
+      before_cache:
+        - rm -f $HOME/.cache/pip/log/debug.log
+      cache:
+        directories:
+          - $HOME/Library/Caches/Homebrew
+          - /usr/local/Homebrew/Library/Homebrew
+          - /usr/local/Homebrew/Library/Taps
+          - $HOME/.cache/pip
+    - stage: deploy
+      if: branch = dev
+      python: 3.6
+      install:
+        - echo "Install"
+      script:
+        - sed -i -E "s/^(version = )(.*)/\1\2.$TRAVIS_BUILD_NUMBER/" $TRAVIS_BUILD_DIR/setup.cfg
+      deploy:
+        - provider: pypi
+          server: https://test.pypi.org/legacy/
+          distributions: sdist bdist_wheel
+          user: YakDriver
+          password:
+            secure: ih5PPwkACCtewmcB5T61zCnrbDo+DpYsKKzesKbhPXLZIg8yxxecO7JEZ0aPo3wGVyIVwTs8jkTokfSKC2sfjS1pDi86X2mlss7ccHQAwwXcOkhijQr6QmMe0LgPRjXZuv8S186akFXmVcxhSI66ldrR9q5WBFx1vGRgtvweg2xdL/bBY/SkOPTr+S0CepB+vElDx9dpXQ+XyZiDmbvjtnT2VXklcNCa2k0UjTvSofadrtvO2sq9kDOZZpFpKZ1mPyvAkUYe5f7Rw2UmRNjUnSZu2y5Np5CwSLITf7oVn1wrdNLD6fvPDAbFASt1O2rwuG6drsT4TzPoR2XrPvxJFJyUAGvdSJnbPaEkk5HUGRbrPl5J15UibbO19tOPiRnfi30gxFqlWduBWWKqJFMe9WOo206BjZe4VB3+kW2GAOv7rNQKKf5frenMQkXtvpuRxzZ5bGKXKF027h5aDDz/cTPLHiMv8ApS9XXMuCE+9ArCjW+jDX/igqbEg/p1a6o+aSqzrTE8TVZT96tdGU16H5yNyDYt+Cn4fECWNruxPb+Xs28Et4fXoUtQ9AD5LGZcsA8bI77mAItHrR8Hg4JOu0Qgiaqd++bYD+ZntbkfySswcYvtr17W5w5R+QiWHjePw4P9U9XAtXcfoMaxOeEv1SsyMCNYFB6Ne4upamHuv4Q=
+          skip_cleanup: true
+          skip_upload_docs: true
+          on:
+            branch: dev
+    - stage: deploy
+      if: branch = master
+      python: 3.6
+      install:
+        - echo "Install"
+      script:
+        - export RELEASE_VERSION=$(grep "version = " $TRAVIS_BUILD_DIR/setup.cfg | sed "s/version = //")
+        - export RELEASE_BODY="* [Satsuki v$RELEASE_VERSION CHANGELOG](https://github.com/YakDriver/satsuki/blob/$RELEASE_VERSION/CHANGELOG.rst)"
+      deploy:
+        - provider: releases
+          name: $RELEASE_VERSION
+          tag_name: $RELEASE_VERSION
+          target_commitish: $TRAVIS_COMMIT
+          body: $RELEASE_BODY
+          draft: false
+          skip_cleanup: true
+          api_key:
+            secure: Mj4uJ7DHHnihcVyi1kc1ZiNVVmKgGg4+6bIGfbqEmvIeKMom5PaR1l5ZnOHPcPkBROS+WkCNnr8AehljBtMIjuC7M4s5gSf9euTu4pzft3TS5qAgWwxw1SlI6LylvzEQG++to9C6WO9ioIlUbcbzfgUAGKlEgbNJ9EuWZ6l+WIDdPtbQ/7JBJkp8zi4DAEryeKyGnxc8w+iAkpXGdoQxXGp0mUcacQ3M5Z/luRQpf/qgkKGx5/sM72ufN7bO32sdNJp4GoY4BLTaQO5xGbPB/yWGU0qrrn+JTIy3foXdbzK0jqQXtrF2h/F80C0TIOksB6Kwx0qBksIUk61S3OBdTnCgDz5dElgwGcTgyc4DJn88uEKVksr/A0YJ+ypXhVUgypqMYke4pTdYstzwD5oPrVZ7NMUMJztz6a/uNt35AY/NWQqFPasjuDWbUypVbxdsriytZp8NdsfmDET/UGMwilgNfIapIQPu3R7Otv6KbGoNHhlM/vJ9rhBV6YlM/P2unFSQdT9HXOlEILbqBzR2jy+ytdUOcwSXU6rw+UyMeoHqjXqHTXpjoVK5gM/fCsvVngJKMPpyU387LnmUvfIYgObhD6FU/QIBVlixDRErVS6RDRICDXxncb8uyJLpqn4Ch3MzBZZ7D+irOI7/8F9z0/oaKR7uA9ObYDage85pm3A=
+          on:
+            branch: master
+    - stage: deploy
+      if: tag is present
+      python: 3.6
+      install:
+        - echo "Install"
+      script:
+        - echo "Script"
+      deploy:
+          - provider: pypi
+            distributions: sdist bdist_wheel
+            user: YakDriver
+            password:
+              secure: ZUVLJ4DisZzHEoj084tpILcIhzNptdMCfVpX/efSDPShS7poMEpFiM5wakZmUicuosDwI3LiIf87l6Y2CcBX5Mxc61Oo5Dhq2MFRYX08FSd3oNhamgHvz0dfhdXPs4/728+gkMALP0weq0d0rsmzwOlfr3unLsqeyqvu+lPj9ZZEMcuvaYz5pplQirtkoGivKelus9dZ+Kx8nX/utLbnt3GUddm3SofpuTUrWMPpjz4rnutjDxEeBHsCoKDqGq/eLQ0W5gdLIbginZd/Z0Nv5jEiz52UP02Kak4RCkk8BmYKdalnoecZNoLDSlurvJSFaVqu0tQDhv8+qXZlR+TPAlZHHoggnpSQPTqnrLAy17Qo3U8BWTyvIaD5q5PzGMy+Q8BJADCLeMbDKH4Ih9hR2ydDsI30tlGCM7sYbBOl/jRPMrvvgK31fCHwcDSlzmDKLEGE6EEBGT+FHQ6j8YOIlnsdq819M5p2kZzKeHDHhIeKdCtiPJOwltirjgaTiDEYAMS4ijGhc5etAZHEpV2nP5jkcK1bpZjw1u3DVaNZSJszFIZOwHLqoHTnNDm2vJ4MMN+2MTxsR7XvLTktQVCizEMKG3Xru39AZTJXAUGYeO09pmjZVBqAxok9FsiXJ3p5MY6DxQd7/55dMSVQJ7syxYXof7TAubi80ToJqjIAwFY=
+            skip_upload_docs: true
+            on:
+              tags: true

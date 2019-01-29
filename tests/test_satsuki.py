@@ -1,7 +1,6 @@
-""" TODO: docstring"""
-# test_pyppyn.py
-
-
+# -*- coding: utf-8 -*-
+# pylint: disable=redefined-outer-name
+"""Test Satsuki module."""
 import uuid
 import os
 import platform
@@ -14,27 +13,25 @@ from satsuki import Arguments, ReleaseMgr
 
 TEST_VERBOSE = True
 TEST_BODY = str(uuid.uuid1())
-TEST_SLUG = "YakDriver/satsuki"
+TEST_SLUG = "YakDriver/satsuki-tests"
 TEST_TAG = "Test-v" + TEST_BODY[:6]
 TEST_REL_NAME = "Test Release v" + TEST_BODY[:6]
-TEST_COMMITISH = "5aacf6b744ec379afafbf3bac2131474a464ee9d"
+TEST_COMMITISH = "85478f0e9298061ca56e62f8054bfe068e97622a"
 TEST_FILENAME = 'tests/release-asset.exe'
 TEST_DOWNLOAD = 'tests/downloaded-asset'
 TEST_DOWNLOAD_SHA = 'tests/downloaded-asset-sha'
-TEST_RECREATE_COMMITISH = "6ba16ceff2efa08fa01c1471c739a6febc2343b6"
+TEST_RECREATE_COMMITISH = "0875719da4be3bf10614719d5ae5d2a548f5f201"
 
 
 def test_blank_arguments():
-    """ Returns an Arguments instance with nothing set. """
+    """Test authorization by getting blank arguments. """
     with pytest.raises(PermissionError):
         Arguments()
 
 
-@pytest.fixture
-def arguments_base(token):
-    """ Basic arguments with authorization (must provide token) """
-    return Arguments(
-        verbose=TEST_VERBOSE,
+def test_create_release(token):
+    """Test creating a GitHub release."""
+    arguments_base = Arguments(
         token=token,
         slug=TEST_SLUG,
         tag=TEST_TAG,
@@ -43,50 +40,52 @@ def arguments_base(token):
         commitish=TEST_COMMITISH
     )
 
-
-@pytest.fixture
-def test_create_release(arguments_base):
-    """ TODO: docstring"""
     r_m = ReleaseMgr(arguments_base)
     r_m.execute()  # <== should create
     compare_args = Arguments(
-        verbose=TEST_VERBOSE,
-        token=arguments_base.api_token,
+        token=token,
         slug=TEST_SLUG,
         tag=TEST_TAG
     )
 
-    assert compare_args.body == TEST_BODY \
-        and compare_args.rel_name == TEST_REL_NAME
+    assert compare_args.opts["body"] == TEST_BODY \
+        and compare_args.opts["rel_name"] == TEST_REL_NAME
 
 
-def test_get_latest(arguments_base):
-    """TODO: docstring """
+def test_get_latest(token):
+    """Test getting the latest GitHub release."""
+    arguments_base = Arguments(
+        token=token,
+        slug=TEST_SLUG,
+        tag=TEST_TAG,
+        body=TEST_BODY,
+        rel_name=TEST_REL_NAME,
+        commitish=TEST_COMMITISH
+    )
+
     r_m = ReleaseMgr(arguments_base)
     r_m.execute()  # <== should create
     compare_args = Arguments(
-        verbose=TEST_VERBOSE,
-        token=arguments_base.api_token,
+        token=token,
         slug=TEST_SLUG,
         latest=True
     )
 
-    if compare_args.tag == TEST_TAG:
-        assert compare_args.tag == TEST_TAG \
-            and compare_args.body == TEST_BODY \
-            and compare_args.rel_name == TEST_REL_NAME
+    if compare_args.opts["tag"] == TEST_TAG:
+        assert compare_args.opts["tag"] == TEST_TAG \
+            and compare_args.opts["body"] == TEST_BODY \
+            and compare_args.opts["rel_name"] == TEST_REL_NAME
     else:
         # a real tag has gotten in first, forget the test
         assert True
 
 
 def test_upload_file_no_sha(token):
-    """TODO: docstring"""
+    """Test uploading an asset to a GitHub release."""
     with open(TEST_FILENAME, 'wb') as fout:
         fout.write(os.urandom(1024000))
 
     args = Arguments(
-        verbose=TEST_VERBOSE,
         token=token,
         slug=TEST_SLUG,
         tag=TEST_TAG,
@@ -99,10 +98,7 @@ def test_upload_file_no_sha(token):
 
 
 def test_download_file_no_sha(token):
-    """
-    Doesn't directly check Satsuki but rather the effects of Satsuki
-    and creation of file and no SHA hash.
-    """
+    """Test whether the file uploaded in previous test exists."""
 
     # github => repo => release => asset_list => asset => url => download
 
@@ -129,11 +125,10 @@ def test_download_file_no_sha(token):
 # Order is important, no sha tests upload, recreate gets rid of upload,
 # and then upload can be done again
 
-def test_recreate_release(arguments_base):
-    """TODO: docstring"""
+def test_recreate_release(token):
+    """Test recreating a GitHub release, which deletes the uploaded asset."""
     recreate_args = Arguments(
-        verbose=TEST_VERBOSE,
-        token=arguments_base.api_token,
+        token=token,
         slug=TEST_SLUG,
         tag=TEST_TAG,
         recreate=True,
@@ -143,16 +138,15 @@ def test_recreate_release(arguments_base):
     new.execute()  # <== should recreate
 
     # really the test is if it makes it this far
-    assert recreate_args.target_commitish == TEST_RECREATE_COMMITISH
+    assert recreate_args.opts["target_commitish"] == TEST_RECREATE_COMMITISH
 
 
 def test_upload_file(token):
-    """TODO: docstring"""
+    """Test uploading an asset to a recreated GitHub release."""
     with open(TEST_FILENAME, 'wb') as fout:
         fout.write(os.urandom(1024000))
 
     args = Arguments(
-        verbose=TEST_VERBOSE,
         token=token,
         slug=TEST_SLUG,
         tag=TEST_TAG,
@@ -166,10 +160,7 @@ def test_upload_file(token):
 
 
 def test_download_file(token):
-    """
-    Doesn't directly check Satsuki but rather the effects of Satsuki
-    and creation of file and SHA hash.
-    """
+    """Test downloading an asset associated with a GitHub release."""
 
     # github => repo => release => asset_list => asset => url => download
 
@@ -206,13 +197,12 @@ def test_download_file(token):
 
 
 def test_delete_release(token):
-    """TODO: docstring"""
+    """Test deleting a GitHub release."""
     delete_args = Arguments(
-        verbose=TEST_VERBOSE,
         token=token,
         slug=TEST_SLUG,
         tag=TEST_TAG,
-        command=Arguments.COMMAND_DELETE,
+        command=Arguments.CMD_DELETE,
         include_tag=True
     )
 
