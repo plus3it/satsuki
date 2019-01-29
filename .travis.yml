@@ -44,7 +44,7 @@ jobs:
         - virtualenv $HOME/venv
         - source $HOME/venv/Scripts/activate
         - git remote rm origin
-        - git remote add origin https://satsuki-tests:$SATS_TOKEN@github.com/YakDriver/satsuki-tests.git
+        - git remote add origin https://satsuki-tests:$SATS_TOKEN@github.com/plus3it/satsuki-tests.git
       install:
         - python -m pip install -r requirements/pip.txt
         - python -m pip install -r requirements/test.txt
@@ -78,13 +78,14 @@ jobs:
         - provider: pypi
           server: https://test.pypi.org/legacy/
           distributions: sdist bdist_wheel
-          user: YakDriver
+          user: plus3it
           password:
-            secure: ih5PPwkACCtewmcB5T61zCnrbDo+DpYsKKzesKbhPXLZIg8yxxecO7JEZ0aPo3wGVyIVwTs8jkTokfSKC2sfjS1pDi86X2mlss7ccHQAwwXcOkhijQr6QmMe0LgPRjXZuv8S186akFXmVcxhSI66ldrR9q5WBFx1vGRgtvweg2xdL/bBY/SkOPTr+S0CepB+vElDx9dpXQ+XyZiDmbvjtnT2VXklcNCa2k0UjTvSofadrtvO2sq9kDOZZpFpKZ1mPyvAkUYe5f7Rw2UmRNjUnSZu2y5Np5CwSLITf7oVn1wrdNLD6fvPDAbFASt1O2rwuG6drsT4TzPoR2XrPvxJFJyUAGvdSJnbPaEkk5HUGRbrPl5J15UibbO19tOPiRnfi30gxFqlWduBWWKqJFMe9WOo206BjZe4VB3+kW2GAOv7rNQKKf5frenMQkXtvpuRxzZ5bGKXKF027h5aDDz/cTPLHiMv8ApS9XXMuCE+9ArCjW+jDX/igqbEg/p1a6o+aSqzrTE8TVZT96tdGU16H5yNyDYt+Cn4fECWNruxPb+Xs28Et4fXoUtQ9AD5LGZcsA8bI77mAItHrR8Hg4JOu0Qgiaqd++bYD+ZntbkfySswcYvtr17W5w5R+QiWHjePw4P9U9XAtXcfoMaxOeEv1SsyMCNYFB6Ne4upamHuv4Q=
+            secure: vEqvZWRD/q2hcIpFpItl3kE4NH0d0ZWpABTh26FcPKfteikPqDwLi9lUbvHQ4kT6z06cDizIYKIoy233LTEFJq7tq8vtKAtH2kpW1YkLo3Qx2/QR+O8fVIA4tyUHBkOqR7QpYMqwVZVoD0RjtVREFn9RubcDguvyTIKgT8GYit5lzlOCk5tORRKs8C7XBNnmMSZTn/otPEl5Q6JTJm6ogymXx6qfLqYXqX5sV28v/pCKLUswOJcnuXwiwB1QKGKNPkq54dI90fnDW2D4DDWVVf9t6FydALjKaOclSvaZ+gfhbDEzT1IvuxGesNoDgXP79h/mnIg0J6+DFDImyga8GcOiOZ44aoBFPHaA5OuRQcARUrXfkfLnVvUqke5d9Xu3UKAYa5uh8CYOeGgUtWPPsuCcBy84yJMwKtkY9Ld+XgBxreH3yhJZDnEKh0f/zkP3b0EP0WaSo+bdS41Q8PueC48kFLYJsTH/bu0wyGgbRUf6xOFPAe4odgQmN3cAn8B47otXm4FiGzrO0KRtQiRGDTkkziI81kkg2K5GnilaumPtNX2fEKmOs9kiMfnbTjml3rpvxhfebQh1ZpNakJZved7qdGnIyQSj+anpGHFSZA1Bu6zGAGFQncuqFley0xu9dyhCpGUXE9tcAtOj7H4Byl7AttXIUfSfydzEUtk6sNA=
           skip_cleanup: true
           skip_upload_docs: true
           on:
             branch: dev
+            repo: plus3it/satsuki
     - stage: deploy
       if: branch = master
       python: 3.6
@@ -92,7 +93,7 @@ jobs:
         - echo "Install"
       script:
         - export RELEASE_VERSION=$(grep "version = " $TRAVIS_BUILD_DIR/setup.cfg | sed "s/version = //")
-        - export RELEASE_BODY="* [Satsuki v$RELEASE_VERSION CHANGELOG](https://github.com/YakDriver/satsuki/blob/$RELEASE_VERSION/CHANGELOG.rst)"
+        - export RELEASE_BODY="* [Satsuki v$RELEASE_VERSION CHANGELOG](https://github.com/plus3it/satsuki/blob/$RELEASE_VERSION/CHANGELOG.rst)"
       deploy:
         - provider: releases
           name: $RELEASE_VERSION
@@ -102,9 +103,10 @@ jobs:
           draft: false
           skip_cleanup: true
           api_key:
-            secure: Mj4uJ7DHHnihcVyi1kc1ZiNVVmKgGg4+6bIGfbqEmvIeKMom5PaR1l5ZnOHPcPkBROS+WkCNnr8AehljBtMIjuC7M4s5gSf9euTu4pzft3TS5qAgWwxw1SlI6LylvzEQG++to9C6WO9ioIlUbcbzfgUAGKlEgbNJ9EuWZ6l+WIDdPtbQ/7JBJkp8zi4DAEryeKyGnxc8w+iAkpXGdoQxXGp0mUcacQ3M5Z/luRQpf/qgkKGx5/sM72ufN7bO32sdNJp4GoY4BLTaQO5xGbPB/yWGU0qrrn+JTIy3foXdbzK0jqQXtrF2h/F80C0TIOksB6Kwx0qBksIUk61S3OBdTnCgDz5dElgwGcTgyc4DJn88uEKVksr/A0YJ+ypXhVUgypqMYke4pTdYstzwD5oPrVZ7NMUMJztz6a/uNt35AY/NWQqFPasjuDWbUypVbxdsriytZp8NdsfmDET/UGMwilgNfIapIQPu3R7Otv6KbGoNHhlM/vJ9rhBV6YlM/P2unFSQdT9HXOlEILbqBzR2jy+ytdUOcwSXU6rw+UyMeoHqjXqHTXpjoVK5gM/fCsvVngJKMPpyU387LnmUvfIYgObhD6FU/QIBVlixDRErVS6RDRICDXxncb8uyJLpqn4Ch3MzBZZ7D+irOI7/8F9z0/oaKR7uA9ObYDage85pm3A=
+            secure: EKF31mjkcGJLqdvOE+ijLY/2xXI9bC19m47qV5lxXJjTdcZwDIHSIH/2yJJ6/1o/FU3gM41GYXT3HfcI2LedkT0sQMu8t6g7h0WISfuUgqtdXZDM5TUmjQj1liirU8rRbLQJflNXbeBveZcJzrZthGXKSHgDvZgZRlGint0NBEDgTwDmUNmDtfii/T7IQBclaSPyUuXPiXaTlHmCY6V9gezcPQOC2g1uEz/NruLdYKw9u9m5Tl+XXP9V5Yo599uZLRCJAxRsDaZdY4xhQtp+zoLxzLz4p6C3yKGMu9fMKqncut6rFb3cWCID9TF53d9dQHcForkpCLBB1Jdkg9QS58xkakW089ZkEoidWGzL4JqeE0ZxGO5yz8Ek+ehi4/jNsuaNIitocgzYlnRs2fDMsCZOul4O9VBulIfRA+nliNwO7nchIWbXAOFXcIJjU8Y4+WRzchq98fJtizPVjxfZ7UBgJ2PYp4/7RiagdZj8KFri+IAXU57cPLh4MvuwxwOr0G4SXh6ZuPd/G7/pIIoNnsNo3ME3C4G0P/9bgtyMC9srQJHzLqvwGYaBuOgilfOu8VZ2d2fEGid8bqXt+JD6l6rLM0dYRT1CPy97VH37Zk0PfRO57pEqQP5XrC1EX0QNgIQG7IIoPCCQuLO6hlScCnY+LE0oOtOuZbzKdVwRciM=
           on:
             branch: master
+            repo: plus3it/satsuki
     - stage: deploy
       if: tag is present
       python: 3.6
@@ -115,9 +117,10 @@ jobs:
       deploy:
           - provider: pypi
             distributions: sdist bdist_wheel
-            user: YakDriver
+            user: plus3it
             password:
-              secure: ZUVLJ4DisZzHEoj084tpILcIhzNptdMCfVpX/efSDPShS7poMEpFiM5wakZmUicuosDwI3LiIf87l6Y2CcBX5Mxc61Oo5Dhq2MFRYX08FSd3oNhamgHvz0dfhdXPs4/728+gkMALP0weq0d0rsmzwOlfr3unLsqeyqvu+lPj9ZZEMcuvaYz5pplQirtkoGivKelus9dZ+Kx8nX/utLbnt3GUddm3SofpuTUrWMPpjz4rnutjDxEeBHsCoKDqGq/eLQ0W5gdLIbginZd/Z0Nv5jEiz52UP02Kak4RCkk8BmYKdalnoecZNoLDSlurvJSFaVqu0tQDhv8+qXZlR+TPAlZHHoggnpSQPTqnrLAy17Qo3U8BWTyvIaD5q5PzGMy+Q8BJADCLeMbDKH4Ih9hR2ydDsI30tlGCM7sYbBOl/jRPMrvvgK31fCHwcDSlzmDKLEGE6EEBGT+FHQ6j8YOIlnsdq819M5p2kZzKeHDHhIeKdCtiPJOwltirjgaTiDEYAMS4ijGhc5etAZHEpV2nP5jkcK1bpZjw1u3DVaNZSJszFIZOwHLqoHTnNDm2vJ4MMN+2MTxsR7XvLTktQVCizEMKG3Xru39AZTJXAUGYeO09pmjZVBqAxok9FsiXJ3p5MY6DxQd7/55dMSVQJ7syxYXof7TAubi80ToJqjIAwFY=
+              secure: oiATfkswECO0XoCG0mKuxKhOL87zzTNJChoNJYTqeQIj+EDNX5rgPWaIm9EWD7AT5NgjdAP2XoqqgYRIG9p8NZgXFHQ9wp37tI4ZcLeRymmq5p3TqFA+peQ1dyf71WRivJX3zhs1yIDseISdVrqQbLqWyakCVQ5b8qMDakJ4kIXcqkRw20qW3bFeRc+ap2BiBv6uPPb8BYBAYOwP6g/pHqlIUq5Brxn0Y0olp5sIgjfq2yX+i0iMFMZBuihgKWxJjXsK19Jvyqvgyrd8EZJeySsw7hnyZbWeCaUGPsJrMFwJ+IbslP3tadB6fiK1Q5rLwVMJhvFlaZOpEQn5Y/KXqjobCMM6SClPVXmFONnix8LEN3KIbysL6LPwLrMOez+q2MNprfJ3GWGbop4fGsCi3P8yaEV2I+Hj85GgJsiQ6TkyEUtX3EPZp7LLWXiP2fpoSnU01ojDXryM4Sbk1gt9zsB3K8iifY85kOTw11wVRL/sfm8N20BJECZrFvKAEGKstJ7ZLZaqIqU80dVDfce8iqrjp+7mDd2Wer/kHm9miinkfp/x9YFPO5feQjOd3sIJIjM3TswvL2JpfOEPK+fVrxC+xWTuZZyd5XFxJx/xkXz8z2Zt5CPqwR24v7hx9nt559MKlEqekBJgsQLddaXU2InFfgZ0gH+aneAF2DGWC9A=
             skip_upload_docs: true
             on:
               tags: true
+              repo: plus3it/satsuki

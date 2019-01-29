@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.1.13 - 2019.01.29
+-------------------
+* [ENHANCEMENT] Clean up code.
+* [ENHANCEMENT] Transfer to Plus3IT.
+
 0.1.12 - 2019.01.25
 -------------------
 * [ENHANCEMENT] Code clean up.

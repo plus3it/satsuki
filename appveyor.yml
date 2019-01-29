@@ -13,7 +13,7 @@ install:
   - pipenv install -r requirements/test.txt 
   - pipenv install -e .
   - git remote rm origin
-  - git remote add origin https://satsuki-tests:%SATS_TOKEN%@github.com/YakDriver/satsuki-tests.git
+  - git remote add origin https://satsuki-tests:%SATS_TOKEN%@github.com/plus3it/satsuki-tests.git
 
 test_script:
   - pipenv run pytest --token %SATS_TOKEN%

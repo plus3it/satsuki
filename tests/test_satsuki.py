@@ -13,14 +13,14 @@ from satsuki import Arguments, ReleaseMgr
 
 TEST_VERBOSE = True
 TEST_BODY = str(uuid.uuid1())
-TEST_SLUG = "YakDriver/satsuki-tests"
+TEST_SLUG = "plus3it/satsuki-tests"
 TEST_TAG = "Test-v" + TEST_BODY[:6]
 TEST_REL_NAME = "Test Release v" + TEST_BODY[:6]
-TEST_COMMITISH = "85478f0e9298061ca56e62f8054bfe068e97622a"
+TEST_COMMITISH = "f25a79b856433fe8c35ac4050a70dd53dc6e684f"
 TEST_FILENAME = 'tests/release-asset.exe'
 TEST_DOWNLOAD = 'tests/downloaded-asset'
 TEST_DOWNLOAD_SHA = 'tests/downloaded-asset-sha'
-TEST_RECREATE_COMMITISH = "0875719da4be3bf10614719d5ae5d2a548f5f201"
+TEST_RECREATE_COMMITISH = "61dbef2d5a7df0d827e311a2ca487df128b5ab08"
 
 
 def test_blank_arguments():
