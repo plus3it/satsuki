@@ -6,6 +6,15 @@ stages:
 python:
   - "3.5"
   - "3.6"
+
+env:
+  global:
+    - REPO="${TRAVIS_REPO_SLUG#*/}"
+    - OWNER=plus3it
+    - RELEASE_BRANCH=master
+    - RELEASE_VERSION=$(grep -E '^current_version' $TRAVIS_BUILD_DIR/.bumpversion.cfg | sed 's/^.*= //')
+    - PRIOR_VERSION=$(git describe --abbrev=0 --tags)
+  
 stage: test
 cache: pip
 before_cache:
@@ -68,10 +77,11 @@ jobs:
           - /usr/local/Homebrew/Library/Taps
           - $HOME/.cache/pip
     - stage: deploy
-      if: branch = dev
+      if: branch = env(RELEASE_BRANCH) AND tag IS blank
       python: 3.6
-      install:
-        - echo "Install"
+      env:
+        - JOB="Deploy to Test PyPI"      
+      install: skip
       script:
         - sed -i -E "s/^(version = )(.*)/\1\2.$TRAVIS_BUILD_NUMBER/" $TRAVIS_BUILD_DIR/setup.cfg
       deploy:
@@ -84,16 +94,13 @@ jobs:
           skip_cleanup: true
           skip_upload_docs: true
           on:
-            branch: dev
-            repo: plus3it/satsuki
+            branch: $RELEASE_BRANCH
     - stage: deploy
-      if: branch = master
+      if: branch = env(RELEASE_BRANCH) AND tag IS blank
       python: 3.6
-      install:
-        - echo "Install"
+      install: skip
       script:
-        - export RELEASE_VERSION=$(grep "version = " $TRAVIS_BUILD_DIR/setup.cfg | sed "s/version = //")
-        - export RELEASE_BODY="* [Satsuki v$RELEASE_VERSION CHANGELOG](https://github.com/plus3it/satsuki/blob/$RELEASE_VERSION/CHANGELOG.rst)"
+        - export RELEASE_BODY="* [$REPO v$RELEASE_VERSION CHANGELOG](https://github.com/$OWNER/$REPO/blob/$RELEASE_VERSION/CHANGELOG.rst)"
       deploy:
         - provider: releases
           name: $RELEASE_VERSION
@@ -105,15 +112,15 @@ jobs:
           api_key:
             secure: EKF31mjkcGJLqdvOE+ijLY/2xXI9bC19m47qV5lxXJjTdcZwDIHSIH/2yJJ6/1o/FU3gM41GYXT3HfcI2LedkT0sQMu8t6g7h0WISfuUgqtdXZDM5TUmjQj1liirU8rRbLQJflNXbeBveZcJzrZthGXKSHgDvZgZRlGint0NBEDgTwDmUNmDtfii/T7IQBclaSPyUuXPiXaTlHmCY6V9gezcPQOC2g1uEz/NruLdYKw9u9m5Tl+XXP9V5Yo599uZLRCJAxRsDaZdY4xhQtp+zoLxzLz4p6C3yKGMu9fMKqncut6rFb3cWCID9TF53d9dQHcForkpCLBB1Jdkg9QS58xkakW089ZkEoidWGzL4JqeE0ZxGO5yz8Ek+ehi4/jNsuaNIitocgzYlnRs2fDMsCZOul4O9VBulIfRA+nliNwO7nchIWbXAOFXcIJjU8Y4+WRzchq98fJtizPVjxfZ7UBgJ2PYp4/7RiagdZj8KFri+IAXU57cPLh4MvuwxwOr0G4SXh6ZuPd/G7/pIIoNnsNo3ME3C4G0P/9bgtyMC9srQJHzLqvwGYaBuOgilfOu8VZ2d2fEGid8bqXt+JD6l6rLM0dYRT1CPy97VH37Zk0PfRO57pEqQP5XrC1EX0QNgIQG7IIoPCCQuLO6hlScCnY+LE0oOtOuZbzKdVwRciM=
           on:
-            branch: master
-            repo: plus3it/satsuki
+            branch: $RELEASE_BRANCH
+            condition: '"$PRIOR_VERSION" != "$RELEASE_VERSION"'
     - stage: deploy
       if: tag is present
       python: 3.6
-      install:
-        - echo "Install"
-      script:
-        - echo "Script"
+      env:
+        - JOB="Deploy to PyPI"      
+      install: skip
+      script: skip
       deploy:
           - provider: pypi
             distributions: sdist bdist_wheel
@@ -123,4 +130,3 @@ jobs:
             skip_upload_docs: true
             on:
               tags: true
-              repo: plus3it/satsuki

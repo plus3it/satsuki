@@ -80,7 +80,7 @@ OS/machine specific binary using
     install:
       - pip install gravitybee satsuki
     script:
-      - gravitybee --src-dir src --verbose --clean
+      - gravitybee --src-dir src --clean
 
 
 **Step 4: Setup the Travis YAML Before Deploy Step**
@@ -148,6 +148,8 @@ command you can create a tag, release, and asset.
 Release/Satsuki Related
 -----------------------
 
+Local logging can be configured in ``satsuki/logging.conf``.
+
 ================  ===============   ==========================================
 ENV VAR           CL Options        Desciption
 ================  ===============   ==========================================
@@ -192,7 +194,6 @@ SATS_PRE          -p, --pre         **[Flag]** Whether or not this release
                                     is a prerelease. *Default: Not*
 SATS_DRAFT        -d, --draft       **[Flag]** Whether or not this release
                                     is a draft. *Default: Not*
-SATS_VERBOSE      -v, --verbose     **[Flag]** Verbose mode. *Default: Not*
 SATS_FORCE        --force           **[Flag]** Force Satsuki to delete items
                                     when normally it would not. **CAUTION:**
                                     You could easily delete every

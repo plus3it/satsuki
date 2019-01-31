@@ -11,7 +11,6 @@ import github
 
 from satsuki import Arguments, ReleaseMgr
 
-TEST_VERBOSE = True
 TEST_BODY = str(uuid.uuid1())
 TEST_SLUG = "plus3it/satsuki-tests"
 TEST_TAG = "Test-v" + TEST_BODY[:6]
