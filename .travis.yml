@@ -24,7 +24,7 @@ install:
   - pip install -r requirements/test.txt
   - pip install --editable .
 script:
-  - pytest --token $SATS_TOKEN
+  - pytest tests/
 jobs:
   allow_failures:
     - os: windows
@@ -52,8 +52,6 @@ jobs:
         - python -m pip install virtualenv
         - virtualenv $HOME/venv
         - source $HOME/venv/Scripts/activate
-        - git remote rm origin
-        - git remote add origin https://satsuki-tests:$SATS_TOKEN@github.com/plus3it/satsuki-tests.git
       install:
         - python -m pip install -r requirements/pip.txt
         - python -m pip install -r requirements/test.txt

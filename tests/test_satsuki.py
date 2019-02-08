@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=redefined-outer-name
 """Test Satsuki module."""
-import uuid
 import os
-import platform
-from string import Template
-import pytest
-import requests
-import github
+import uuid
+from unittest.mock import patch, MagicMock
 
+import pytest
+import github
+import satsuki
 from satsuki import Arguments, ReleaseMgr
 
 TEST_BODY = str(uuid.uuid1())
@@ -22,189 +21,185 @@ TEST_DOWNLOAD_SHA = 'tests/downloaded-asset-sha'
 TEST_RECREATE_COMMITISH = "61dbef2d5a7df0d827e311a2ca487df128b5ab08"
 
 
+def test_sha_hash():
+    """Test getting the sha hash for a test file. """
+    assert Arguments.get_hash(
+        os.path.join('tests', 'sha_hash_test.txt')) == \
+        '809838efd41698422636fb2df8bebe2a7e8c29a3baf109b3bdceed6812266903'
+
+
+def test_sha_hash_nonexistent_file():
+    """Test what happens when getting a sha hash for nonexistent file. """
+    assert Arguments.get_hash('nonexistent_file.xyz') is None
+
+
+def test_no_slug_arguments():
+    """Test missing slug. """
+    restore_enviro = os.environ
+
+    if os.environ.get('TRAVIS_REPO_SLUG', False):
+        del os.environ['TRAVIS_REPO_SLUG']
+    if os.environ.get('APPVEYOR_REPO_NAME', False):
+        del os.environ['APPVEYOR_REPO_NAME']
+
+    with pytest.raises(AttributeError):
+        Arguments(token='abc', empty_arg=None)
+
+    os.environ = restore_enviro
+
+
+def test_bad_command():
+    """Test providing a bad command. """
+    with pytest.raises(AttributeError):
+        Arguments(token='abc', slug=TEST_SLUG, tag=TEST_TAG, command='bad')
+
+
+def test_gb_info():
+    """Test providing a gravitybee info file. """
+    with pytest.raises(ReferenceError):
+        Arguments(
+            token='abc',
+            slug=TEST_SLUG,
+            tag=TEST_TAG,
+            gb_info_file=os.path.join('tests', 'gravitybee-info.json'))
+
+
+@patch.object(satsuki.github.Github, 'get_repo', autospec=True)
+def test_get_repo(mock_get_repo):
+    """Test getting a repo for Github API. """
+    mock_release = MagicMock()
+    mock_release.tag_name = 'Mocked tag'
+
+    mock_get_repo.return_value.get_release.return_value = mock_release
+
+    Arguments(
+        token='abc',
+        slug=TEST_SLUG,
+        tag=TEST_TAG)
+
+    # python 3.5 doesn't have "assert_called_once"
+    assert_called_once = getattr(
+        mock_get_repo.return_value.get_release,
+        "assert_called_once", None)
+    if callable(assert_called_once):
+        assert_called_once()
+    else:
+        assert mock_get_repo.return_value.get_release.call_count == 1
+
+
+@patch.object(satsuki.github.Github, 'get_repo', autospec=True)
+def test_get_latest_repo(mock_get_repo):
+    """Test getting latest release. """
+    mock_release = MagicMock()
+    mock_release.tag_name = 'Mocked tag'
+
+    mock_get_repo.return_value.get_latest_release.return_value = mock_release
+
+    args = Arguments(
+        token='abc',
+        slug='bad slug',
+        latest=True,
+        user='user',
+        repo='repo')
+    assert args.opts["slug"] == 'user/repo'
+
+    # python 3.5 doesn't have "assert_called_once"
+    assert_called_once = getattr(
+        mock_get_repo.return_value.get_latest_release,
+        "assert_called_once", None)
+    if callable(assert_called_once):
+        assert_called_once()
+    else:
+        assert mock_get_repo.return_value.get_latest_release.call_count == 1
+
+
+@patch.object(satsuki.github.Github, 'get_repo', autospec=True)
+def test_no_release_no_tag(mock_get_repo):
+    """Test error when no release/no tag exists. """
+
+    # this is to simulate no repo existing yet, i.e., need to create
+    mock_get_repo.return_value.get_latest_release.side_effect = \
+        github.GithubException('status', 'data')
+
+    with pytest.raises(AttributeError):
+        Arguments(
+            token='abc',
+            slug=TEST_SLUG,
+            latest=True)
+
+
+@patch.object(satsuki.github.Github, 'get_repo', autospec=True)
+def test_no_release(mock_get_repo):
+    """Test create selected when no release exists. """
+
+    # this is to simulate no repo existing yet, i.e., need to create
+    mock_get_repo.return_value.get_release.side_effect = \
+        github.GithubException('status', 'data')
+
+    args = Arguments(
+        token='abc',
+        slug=TEST_SLUG,
+        tag=TEST_TAG)
+    assert args.opts["internal_cmd"] == Arguments.INTERNAL_CMD_CREATE
+
+
+@patch.object(satsuki.github.Github, 'get_repo', autospec=True)
+def test_create_execute(mock_get_repo):
+    """Test create selected when no release exists. """
+    mock_release = MagicMock()
+    mock_release.tag_name = 'Mocked tag'
+
+    mock_get_repo.return_value.create_git_release.return_value = mock_release
+
+    # this is to simulate no repo existing yet, i.e., need to create
+    mock_get_repo.return_value.get_release.side_effect = \
+        github.GithubException('status', 'data')
+
+    args = Arguments(
+        token='abc',
+        slug=TEST_SLUG,
+        tag=TEST_TAG,
+        commitish=TEST_COMMITISH)
+    rel_man = ReleaseMgr(args)
+    rel_man.execute()
+
+    # python 3.5 doesn't have "assert_called_once"
+    assert_called_once = getattr(
+        mock_get_repo.return_value.create_git_release,
+        "assert_called_once", None)
+    if callable(assert_called_once):
+        assert_called_once()
+    else:
+        assert mock_get_repo.return_value.create_git_release.call_count == 1
+
+
+@patch.object(satsuki.github.Github, 'get_repo', autospec=True)
+def test_find_and_delete(mock_get_repo):
+    """Test find and delete release."""
+    mock_release = MagicMock()
+    mock_release.delete_release.return_value = True
+
+    mock_get_repo.return_value.get_release.return_value = mock_release
+
+    args = Arguments(
+        token='abc',
+        slug=TEST_SLUG,
+        tag=TEST_TAG,
+        commitish=TEST_COMMITISH,
+        command=Arguments.CMD_DELETE)
+    rel_man = ReleaseMgr(args)
+    rel_man.execute()
+
+    # python 3.5 doesn't have "assert_called_once"
+    assert_called_once = getattr(
+        mock_release.delete_release, "assert_called_once", None)
+    if callable(assert_called_once):
+        assert_called_once()
+    else:
+        assert mock_release.delete_release.call_count == 1
+
+
 def test_blank_arguments():
     """Test authorization by getting blank arguments. """
     with pytest.raises(PermissionError):
         Arguments()
-
-
-def test_create_release(token):
-    """Test creating a GitHub release."""
-    arguments_base = Arguments(
-        token=token,
-        slug=TEST_SLUG,
-        tag=TEST_TAG,
-        body=TEST_BODY,
-        rel_name=TEST_REL_NAME,
-        commitish=TEST_COMMITISH
-    )
-
-    r_m = ReleaseMgr(arguments_base)
-    r_m.execute()  # <== should create
-    compare_args = Arguments(
-        token=token,
-        slug=TEST_SLUG,
-        tag=TEST_TAG
-    )
-
-    assert compare_args.opts["body"] == TEST_BODY \
-        and compare_args.opts["rel_name"] == TEST_REL_NAME
-
-
-def test_get_latest(token):
-    """Test getting the latest GitHub release."""
-    arguments_base = Arguments(
-        token=token,
-        slug=TEST_SLUG,
-        tag=TEST_TAG,
-        body=TEST_BODY,
-        rel_name=TEST_REL_NAME,
-        commitish=TEST_COMMITISH
-    )
-
-    r_m = ReleaseMgr(arguments_base)
-    r_m.execute()  # <== should create
-    compare_args = Arguments(
-        token=token,
-        slug=TEST_SLUG,
-        latest=True
-    )
-
-    if compare_args.opts["tag"] == TEST_TAG:
-        assert compare_args.opts["tag"] == TEST_TAG \
-            and compare_args.opts["body"] == TEST_BODY \
-            and compare_args.opts["rel_name"] == TEST_REL_NAME
-    else:
-        # a real tag has gotten in first, forget the test
-        assert True
-
-
-def test_upload_file_no_sha(token):
-    """Test uploading an asset to a GitHub release."""
-    with open(TEST_FILENAME, 'wb') as fout:
-        fout.write(os.urandom(1024000))
-
-    args = Arguments(
-        token=token,
-        slug=TEST_SLUG,
-        tag=TEST_TAG,
-        files_file="tests/test.file"
-    )
-
-    ul_rel = ReleaseMgr(args)
-    ul_rel.execute()
-    assert True
-
-
-def test_download_file_no_sha(token):
-    """Test whether the file uploaded in previous test exists."""
-
-    # github => repo => release => asset_list => asset => url => download
-
-    g_h = github.Github(token, per_page=100)
-    repo = g_h.get_repo(TEST_SLUG, lazy=False)
-    release = repo.get_release(TEST_TAG)
-    asset_list = release.get_assets()
-    sha_filename = Template(Arguments.HASH_FILE).safe_substitute({
-        'platform': platform.system().lower()
-    })
-
-    pass_test = True
-
-    for check_asset in asset_list:
-        # look through list of assets for uploaded file and sha file
-
-        if check_asset.name == sha_filename:
-
-            pass_test = False
-
-    assert pass_test
-
-
-# Order is important, no sha tests upload, recreate gets rid of upload,
-# and then upload can be done again
-
-def test_recreate_release(token):
-    """Test recreating a GitHub release, which deletes the uploaded asset."""
-    recreate_args = Arguments(
-        token=token,
-        slug=TEST_SLUG,
-        tag=TEST_TAG,
-        recreate=True,
-        commitish=TEST_RECREATE_COMMITISH
-    )
-    new = ReleaseMgr(recreate_args)
-    new.execute()  # <== should recreate
-
-    # really the test is if it makes it this far
-    assert recreate_args.opts["target_commitish"] == TEST_RECREATE_COMMITISH
-
-
-def test_upload_file(token):
-    """Test uploading an asset to a recreated GitHub release."""
-    with open(TEST_FILENAME, 'wb') as fout:
-        fout.write(os.urandom(1024000))
-
-    args = Arguments(
-        token=token,
-        slug=TEST_SLUG,
-        tag=TEST_TAG,
-        files_file="tests/test.file",
-        file_sha=Arguments.FILE_SHA_SEP_FILE
-    )
-
-    ul_rel = ReleaseMgr(args)
-    ul_rel.execute()
-    assert True
-
-
-def test_download_file(token):
-    """Test downloading an asset associated with a GitHub release."""
-
-    # github => repo => release => asset_list => asset => url => download
-
-    g_h = github.Github(token, per_page=100)
-    repo = g_h.get_repo(TEST_SLUG, lazy=False)
-    release = repo.get_release(TEST_TAG)
-    asset_list = release.get_assets()
-    sha_filename = Template(Arguments.HASH_FILE).safe_substitute({
-        'platform': platform.system().lower()
-    })
-
-    assets_calculated_sha = 'notasha'
-    sha_dict = {}
-
-    for check_asset in asset_list:
-        # look through list of assets for uploaded file and sha file
-
-        if check_asset.name == os.path.basename(TEST_FILENAME):
-
-            # the uploaded asset
-            request = requests.get(check_asset.browser_download_url)
-            open(TEST_DOWNLOAD, 'wb').write(request.content)
-
-            # recalc hash of downloaded file
-            assets_calculated_sha = Arguments.get_hash(TEST_DOWNLOAD)
-
-        elif check_asset.name == sha_filename:
-
-            # the sha hash file
-            request = requests.get(check_asset.browser_download_url)
-            sha_dict = request.json()
-
-    assert assets_calculated_sha == sha_dict[os.path.basename(TEST_FILENAME)]
-
-
-def test_delete_release(token):
-    """Test deleting a GitHub release."""
-    delete_args = Arguments(
-        token=token,
-        slug=TEST_SLUG,
-        tag=TEST_TAG,
-        command=Arguments.CMD_DELETE,
-        include_tag=True
-    )
-
-    del_rel = ReleaseMgr(delete_args)
-    del_rel.execute()
-    assert True
