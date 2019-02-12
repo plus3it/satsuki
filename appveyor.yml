@@ -3,9 +3,6 @@ build: "off"
 image: Visual Studio 2015
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
-branches:
-  only:
-    - dev
 install:
   - pip install pipenv
   - pipenv --python 3
