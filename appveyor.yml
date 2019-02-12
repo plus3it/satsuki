@@ -3,17 +3,12 @@ build: "off"
 image: Visual Studio 2015
 cache:
   - '%LOCALAPPDATA%\pip\Cache'
-branches:
-  only:
-    - dev
 install:
   - pip install pipenv
   - pipenv --python 3
   - pipenv install -r requirements/pip.txt
   - pipenv install -r requirements/test.txt 
   - pipenv install -e .
-  - git remote rm origin
-  - git remote add origin https://satsuki-tests:%SATS_TOKEN%@github.com/YakDriver/satsuki-tests.git
 
 test_script:
-  - pipenv run pytest --token %SATS_TOKEN%
+  - pipenv run pytest

@@ -33,7 +33,7 @@ import github
 import github.GithubException
 
 
-__version__ = "0.1.12"
+__version__ = "0.1.13"
 EXIT_OK = 0
 
 logging.config.fileConfig(
@@ -136,6 +136,11 @@ class Arguments():
         self._init_tag(kwargs)
         self._init_internal_command()
 
+        if self.opts["internal_cmd"] == Arguments.INTERNAL_CMD_CREATE and \
+                (not self.opts['tag'] or self.flags['latest']):
+            raise_error(
+                "Must include tag when creating release", AttributeError)
+
         if self.opts["internal_cmd"] == Arguments.INTERNAL_CMD_CREATE:
             self._init_data_blank(kwargs)
         elif self.opts["internal_cmd"] == Arguments.INTERNAL_CMD_UPDATE or \
@@ -205,16 +210,21 @@ class Arguments():
                 'TRAVIS_COMMIT',
                 os.environ.get('APPVEYOR_REPO_COMMIT', None)))
 
+        self.opts["gb_info_file"] = kwargs.get(
+            'gb_info_file',
+            os.environ.get(
+                'GB_INFO_FILE', Arguments.GB_INFO_FILE))
+
     def _init_gb_info(self):
         """Gets GB (GravityBee) info, if any."""
         gb_info = None
         self.gb_subs = {}
 
-        if os.path.exists(Arguments.GB_INFO_FILE):
+        if os.path.exists(self.opts["gb_info_file"]):
             logger.info("Setting up variable substitution...")
 
             # open gravitybee info file and use app version
-            info_file = open(Arguments.GB_INFO_FILE, "r")
+            info_file = open(self.opts["gb_info_file"], "r")
             gb_info = json.loads(info_file.read())
             info_file.close()
 
@@ -242,7 +252,7 @@ class Arguments():
         # tag - required (or latest)
         self.opts["tag"] = kwargs.get('tag', None)
 
-        if isinstance(self.opts["tag"], str):
+        if self.opts["tag"]:
             self.opts["tag"] = Template(self.opts["tag"]).safe_substitute(
                 self.gb_subs)
 
