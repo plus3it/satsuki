@@ -8,7 +8,7 @@ Satsuki
 .. image:: https://travis-ci.org/plus3it/satsuki.svg?branch=master
     :target: http://travis-ci.org/plus3it/satsuki
     :alt: Build Status
-.. image:: https://ci.appveyor.com/api/projects/status/r3rr8moksjihbmm7?svg=true
+.. image:: https://ci.appveyor.com/api/projects/status/9f0bdlgdc9em6bqc?svg=true
     :target: https://github.com/plus3it/satsuki
     :alt: Build Status
 .. image:: https://img.shields.io/pypi/pyversions/satsuki.svg
