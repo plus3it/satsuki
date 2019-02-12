@@ -10,15 +10,10 @@ import github
 import satsuki
 from satsuki import Arguments, ReleaseMgr
 
-TEST_BODY = str(uuid.uuid1())
+TEST_UUID = str(uuid.uuid1())
 TEST_SLUG = "plus3it/satsuki-tests"
-TEST_TAG = "Test-v" + TEST_BODY[:6]
-TEST_REL_NAME = "Test Release v" + TEST_BODY[:6]
+TEST_TAG = "Test-v" + TEST_UUID[:6]
 TEST_COMMITISH = "f25a79b856433fe8c35ac4050a70dd53dc6e684f"
-TEST_FILENAME = 'tests/release-asset.exe'
-TEST_DOWNLOAD = 'tests/downloaded-asset'
-TEST_DOWNLOAD_SHA = 'tests/downloaded-asset-sha'
-TEST_RECREATE_COMMITISH = "61dbef2d5a7df0d827e311a2ca487df128b5ab08"
 
 
 def test_sha_hash():
