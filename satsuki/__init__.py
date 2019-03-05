@@ -846,8 +846,7 @@ class ReleaseMgr():
         else:
             if upload_error is not None:
                 raise upload_error
-            else:
-                raise ConnectionError
+            raise ConnectionError
 
     def _upload_files(self):
         """Upload files to a release."""
@@ -897,11 +896,11 @@ class ReleaseMgr():
                             release.delete_release()
                             raise github.UnknownObjectException(
                                 "404", "Spoof to hit except")
-                        else:
-                            logger.info(
-                                "Tag %s still connected to release: %s",
-                                tag.name,
-                                "not deleting")
+
+                        logger.info(
+                            "Tag %s still connected to release: %s",
+                            tag.name,
+                            "not deleting")
                     except github.UnknownObjectException:
                         # No release exists, get rid of tag
                         # delete the local tag (if any)
