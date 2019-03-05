@@ -10,8 +10,8 @@ pytest = "*"
 pytest-cov = "*"
 
 [packages]
-click = "==7.0"
-PyGithub = "==1.43.5"
-requests = "==2.21.0"
+click = "*"
+PyGithub = "*"
+requests = "*"
 
 [requires]
