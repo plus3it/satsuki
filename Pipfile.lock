@@ -52,10 +52,10 @@
         },
         "pygithub": {
             "hashes": [
-                "sha256:74cbc6a0518bc7f4a8a1c047c954592abe622b735f1352ea30201668607fbe24"
+                "sha256:2ce91d4990efbfb7a0a1abd06e2106a3998a4a5810a4bdd3c1b6be5499918e9b"
             ],
             "index": "pypi",
-            "version": "==1.43.6"
+            "version": "==1.43.7"
         },
         "pyjwt": {
             "hashes": [
