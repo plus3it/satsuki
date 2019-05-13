@@ -17,7 +17,9 @@ Satsuki
 .. image:: https://img.shields.io/pypi/v/satsuki.svg
     :target: https://pypi.python.org/pypi/satsuki
     :alt: Version
-
+.. image:: https://pullreminders.com/badge.svg
+    :target: https://pullreminders.com?ref=badge
+    :alt: Pull Reminder
 
 **Satsuki** (*pronounced SAHT-ski*) is a Python package that helps
 manage GitHub releases and release assets.
