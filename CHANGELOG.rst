@@ -1,6 +1,18 @@
 CHANGE LOG
 ==========
 
+0.1.16 - 2020.01.14
+-------------------
+* [ENHANCEMENT] New version with updated dependencies versions.
+
+0.1.15 - 2019.05.06
+-------------------
+* [ENHANCEMENT] New version with updated dependencies versions.
+
+0.1.14 - 2019.04.22
+-------------------
+* [ENHANCEMENT] New version with updated dependencies versions.
+
 0.1.13 - 2019.01.29
 -------------------
 * [ENHANCEMENT] Clean up code.
