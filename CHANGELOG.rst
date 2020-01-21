@@ -1,6 +1,10 @@
 CHANGE LOG
 ==========
 
+0.1.17 - 2020.01.15
+-------------------
+* [ENHANCEMENT] Remove pipenv files, update setup.cfg dependency versions.
+
 0.1.16 - 2020.01.14
 -------------------
 * [ENHANCEMENT] New version with updated dependencies versions.
