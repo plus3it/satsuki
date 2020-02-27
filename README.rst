@@ -173,8 +173,8 @@ SATS_RECREATE_OK  --recreate        **[Flag]** Indicates whether a release
 SATS_SLUG         -s, --slug        **[Required]** Either repo and user or
                                     the slug (in the form user/repo) must be
                                     provided. *If not provided, it will default
-                                    to the value provided by Travis CI or
-                                    AppVeyor, if any.*
+                                    to the value provided by Travis CI, Azure
+                                    Pipelines or AppVeyor, if any.*
 SATS_REPO         -r, --repo        **[Required]** The GitHub repository to
                                     work with.
 SATS_USER         -u, --user        **[Required]** The owner of the repository
@@ -232,7 +232,8 @@ SATS_COMMITISH    --commitish       Can be any branch or commit SHA. Unused
                                     default
                                     to the TRAVIS_COMMIT environment variable
                                     provided by
-                                    Travis CI or APPVEYOR_REPO_COMMIT from
+                                    Travis CI or BUILD_SOURCEVERSION from Azure
+                                    Pipelines or APPVEYOR_REPO_COMMIT from
                                     AppVeyor, if any. If none is provided,
                                     GitHub will default to the default branch.*
 SATS_INCLUDE_TAG  --include-tag     Whether to delete the tag when deleting the

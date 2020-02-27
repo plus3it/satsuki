@@ -33,7 +33,7 @@ import github
 import github.GithubException
 
 
-__version__ = "0.1.18"
+__version__ = "0.1.19"
 EXIT_OK = 0
 
 logging.config.fileConfig(
@@ -182,7 +182,9 @@ class Arguments():
             os.environ.get(
                 'TRAVIS_REPO_SLUG',
                 os.environ.get(
-                    'APPVEYOR_REPO_NAME', None)))
+                    'APPVEYOR_REPO_NAME',
+                    os.environ.get(
+                        'BUILD_REPOSITORY_NAME', None))))
 
         if isinstance(self.opts["slug"], str) and '/' not in self.opts["slug"]:
             logger.warning("Invalid repo slug: %s", self.opts["slug"])
@@ -208,7 +210,10 @@ class Arguments():
             'commitish',
             os.environ.get(
                 'TRAVIS_COMMIT',
-                os.environ.get('APPVEYOR_REPO_COMMIT', None)))
+                os.environ.get(
+                    'APPVEYOR_REPO_COMMIT',
+                    os.environ.get(
+                        'BUILD_SOURCEVERSION', None))))
 
         self.opts["gb_info_file"] = kwargs.get(
             'gb_info_file',
