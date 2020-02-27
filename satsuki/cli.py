@@ -71,7 +71,8 @@ click.disable_unicode_literals_warning = True
               + 'default '
               + 'to the TRAVIS_COMMIT environment variable '
               + 'provided by '
-              + 'Travis CI or APPVEYOR_REPO_COMMIT from '
+              + 'Travis CI or BUILD_SOURCEVERSION from Azure Pipelines or '
+              + 'APPVEYOR_REPO_COMMIT from '
               + 'AppVeyor, if any. If none is provided, '
               + 'GitHub will default to the default branch.')
 @click.option('--include-tag', 'include_tag', envvar='SATS_INCLUDE_TAG',

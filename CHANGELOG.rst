@@ -1,6 +1,11 @@
 CHANGE LOG
 ==========
 
+0.1.19 - 2020.02.27
+-------------------
+* [ENHANCEMENT] Improve integration with Azure Pipelines, using commitish and
+  repository slug automatically.
+
 0.1.17 - 2020.01.15
 -------------------
 * [ENHANCEMENT] Remove pipenv files, update setup.cfg dependency versions.
