@@ -26,8 +26,6 @@ install:
 script:
   - pytest tests/
 jobs:
-  allow_failures:
-    - os: windows
   include:
     - stage: lint
       python: 3.6
@@ -42,38 +40,6 @@ jobs:
     - stage: test
       python: 3.7
       dist: xenial
-    - stage: test
-      os: windows
-      language: sh
-      python: 3.7
-      before_install:
-        - choco install python3
-        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
-        - python -m pip install virtualenv
-        - virtualenv $HOME/venv
-        - source $HOME/venv/Scripts/activate
-      install:
-        - python -m pip install -r requirements/pip.txt
-        - python -m pip install -r requirements/test.txt
-        - pip install --editable .
-    - stage: test
-      os: osx
-      osx_image: xcode10.1
-      language: sh
-      python: 3.7
-      # Perform the manual steps on osx to install python3 and activate venv
-      before_install:
-        - python3 -m pip install virtualenv
-        - virtualenv $HOME/venv -p python3
-        - source $HOME/venv/bin/activate
-      before_cache:
-        - rm -f $HOME/.cache/pip/log/debug.log
-      cache:
-        directories:
-          - $HOME/Library/Caches/Homebrew
-          - /usr/local/Homebrew/Library/Homebrew
-          - /usr/local/Homebrew/Library/Taps
-          - $HOME/.cache/pip
     - stage: deploy
       if: branch = env(RELEASE_BRANCH) AND tag IS blank
       python: 3.6
