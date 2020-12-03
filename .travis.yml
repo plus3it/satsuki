@@ -1,3 +1,4 @@
+version: ~> 1.0
 language: python
 stages:
   - lint
@@ -11,18 +12,16 @@ env:
   global:
     - REPO="${TRAVIS_REPO_SLUG#*/}"
     - OWNER=plus3it
-    - RELEASE_BRANCH=master
     - RELEASE_VERSION=$(grep -E '^current_version' $TRAVIS_BUILD_DIR/.bumpversion.cfg | sed 's/^.*= //')
     - PRIOR_VERSION=$(git describe --abbrev=0 --tags)
-  
-stage: test
+
+if: branch = master OR type = pull_request OR tag is present
 cache: pip
 before_cache:
   - rm -f $HOME/.cache/pip/log/debug.log
 install:
-  - pip install -r requirements/pip.txt
-  - pip install -r requirements/test.txt
-  - pip install --editable .
+  - python -m pip install -r requirements/test.txt
+  - python -m pip install --editable .
 script:
   - pytest tests/
 jobs:
@@ -30,21 +29,19 @@ jobs:
     - stage: lint
       python: 3.6
       install:
-        - pip install -r requirements/pip.txt
-        - pip install -r requirements/lint.txt
-        - pip install --editable .
+        - python -m pip install -r requirements/lint.txt
+        - python -m pip install --editable .
       script:
         - pylint satsuki
-        - pylint tests/*py
+        - pylint tests/*.py
         - flake8
     - stage: test
       python: 3.7
       dist: xenial
     - stage: deploy
-      if: branch = env(RELEASE_BRANCH) AND tag IS blank
+      name: Deploy to Test PyPI
+      if: branch = master AND type != pull_request
       python: 3.6
-      env:
-        - JOB="Deploy to Test PyPI"      
       install: skip
       script:
         - sed -i -E "s/^(version = )(.*)/\1\2.$TRAVIS_BUILD_NUMBER/" $TRAVIS_BUILD_DIR/setup.cfg
@@ -52,15 +49,17 @@ jobs:
         - provider: pypi
           server: https://test.pypi.org/legacy/
           distributions: sdist bdist_wheel
-          user: plus3it
+          username: plus3it
           password:
             secure: vEqvZWRD/q2hcIpFpItl3kE4NH0d0ZWpABTh26FcPKfteikPqDwLi9lUbvHQ4kT6z06cDizIYKIoy233LTEFJq7tq8vtKAtH2kpW1YkLo3Qx2/QR+O8fVIA4tyUHBkOqR7QpYMqwVZVoD0RjtVREFn9RubcDguvyTIKgT8GYit5lzlOCk5tORRKs8C7XBNnmMSZTn/otPEl5Q6JTJm6ogymXx6qfLqYXqX5sV28v/pCKLUswOJcnuXwiwB1QKGKNPkq54dI90fnDW2D4DDWVVf9t6FydALjKaOclSvaZ+gfhbDEzT1IvuxGesNoDgXP79h/mnIg0J6+DFDImyga8GcOiOZ44aoBFPHaA5OuRQcARUrXfkfLnVvUqke5d9Xu3UKAYa5uh8CYOeGgUtWPPsuCcBy84yJMwKtkY9Ld+XgBxreH3yhJZDnEKh0f/zkP3b0EP0WaSo+bdS41Q8PueC48kFLYJsTH/bu0wyGgbRUf6xOFPAe4odgQmN3cAn8B47otXm4FiGzrO0KRtQiRGDTkkziI81kkg2K5GnilaumPtNX2fEKmOs9kiMfnbTjml3rpvxhfebQh1ZpNakJZved7qdGnIyQSj+anpGHFSZA1Bu6zGAGFQncuqFley0xu9dyhCpGUXE9tcAtOj7H4Byl7AttXIUfSfydzEUtk6sNA=
-          skip_cleanup: true
-          skip_upload_docs: true
+          cleanup: false
+          upload_docs: false
           on:
-            branch: $RELEASE_BRANCH
+            branch: master
+            condition: '"$PRIOR_VERSION" = "$RELEASE_VERSION"'
     - stage: deploy
-      if: branch = env(RELEASE_BRANCH) AND tag IS blank
+      name: Create GitHub Release
+      if: branch = master AND type != pull_request
       python: 3.6
       install: skip
       script:
@@ -70,27 +69,26 @@ jobs:
           name: $RELEASE_VERSION
           tag_name: $RELEASE_VERSION
           target_commitish: $TRAVIS_COMMIT
-          body: $RELEASE_BODY
+          release_notes: $RELEASE_BODY
           draft: false
-          skip_cleanup: true
-          api_key:
+          cleanup: false
+          token:
             secure: EKF31mjkcGJLqdvOE+ijLY/2xXI9bC19m47qV5lxXJjTdcZwDIHSIH/2yJJ6/1o/FU3gM41GYXT3HfcI2LedkT0sQMu8t6g7h0WISfuUgqtdXZDM5TUmjQj1liirU8rRbLQJflNXbeBveZcJzrZthGXKSHgDvZgZRlGint0NBEDgTwDmUNmDtfii/T7IQBclaSPyUuXPiXaTlHmCY6V9gezcPQOC2g1uEz/NruLdYKw9u9m5Tl+XXP9V5Yo599uZLRCJAxRsDaZdY4xhQtp+zoLxzLz4p6C3yKGMu9fMKqncut6rFb3cWCID9TF53d9dQHcForkpCLBB1Jdkg9QS58xkakW089ZkEoidWGzL4JqeE0ZxGO5yz8Ek+ehi4/jNsuaNIitocgzYlnRs2fDMsCZOul4O9VBulIfRA+nliNwO7nchIWbXAOFXcIJjU8Y4+WRzchq98fJtizPVjxfZ7UBgJ2PYp4/7RiagdZj8KFri+IAXU57cPLh4MvuwxwOr0G4SXh6ZuPd/G7/pIIoNnsNo3ME3C4G0P/9bgtyMC9srQJHzLqvwGYaBuOgilfOu8VZ2d2fEGid8bqXt+JD6l6rLM0dYRT1CPy97VH37Zk0PfRO57pEqQP5XrC1EX0QNgIQG7IIoPCCQuLO6hlScCnY+LE0oOtOuZbzKdVwRciM=
           on:
-            branch: $RELEASE_BRANCH
+            branch: master
             condition: '"$PRIOR_VERSION" != "$RELEASE_VERSION"'
     - stage: deploy
+      name: Deploy to PyPI
       if: tag is present
       python: 3.6
-      env:
-        - JOB="Deploy to PyPI"      
       install: skip
       script: skip
       deploy:
           - provider: pypi
             distributions: sdist bdist_wheel
-            user: plus3it
+            username: plus3it
             password:
               secure: oiATfkswECO0XoCG0mKuxKhOL87zzTNJChoNJYTqeQIj+EDNX5rgPWaIm9EWD7AT5NgjdAP2XoqqgYRIG9p8NZgXFHQ9wp37tI4ZcLeRymmq5p3TqFA+peQ1dyf71WRivJX3zhs1yIDseISdVrqQbLqWyakCVQ5b8qMDakJ4kIXcqkRw20qW3bFeRc+ap2BiBv6uPPb8BYBAYOwP6g/pHqlIUq5Brxn0Y0olp5sIgjfq2yX+i0iMFMZBuihgKWxJjXsK19Jvyqvgyrd8EZJeySsw7hnyZbWeCaUGPsJrMFwJ+IbslP3tadB6fiK1Q5rLwVMJhvFlaZOpEQn5Y/KXqjobCMM6SClPVXmFONnix8LEN3KIbysL6LPwLrMOez+q2MNprfJ3GWGbop4fGsCi3P8yaEV2I+Hj85GgJsiQ6TkyEUtX3EPZp7LLWXiP2fpoSnU01ojDXryM4Sbk1gt9zsB3K8iifY85kOTw11wVRL/sfm8N20BJECZrFvKAEGKstJ7ZLZaqIqU80dVDfce8iqrjp+7mDd2Wer/kHm9miinkfp/x9YFPO5feQjOd3sIJIjM3TswvL2JpfOEPK+fVrxC+xWTuZZyd5XFxJx/xkXz8z2Zt5CPqwR24v7hx9nt559MKlEqekBJgsQLddaXU2InFfgZ0gH+aneAF2DGWC9A=
-            skip_upload_docs: true
+            upload_docs: false
             on:
               tags: true
