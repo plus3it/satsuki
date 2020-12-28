@@ -72,14 +72,7 @@ def test_get_repo(mock_get_repo):
         slug=TEST_SLUG,
         tag=TEST_TAG)
 
-    # python 3.5 doesn't have "assert_called_once"
-    assert_called_once = getattr(
-        mock_get_repo.return_value.get_release,
-        "assert_called_once", None)
-    if callable(assert_called_once):
-        assert_called_once()
-    else:
-        assert mock_get_repo.return_value.get_release.call_count == 1
+    mock_get_repo.return_value.get_release.assert_called_once()
 
 
 @patch.object(satsuki.github.Github, 'get_repo', autospec=True)
@@ -98,14 +91,7 @@ def test_get_latest_repo(mock_get_repo):
         repo='repo')
     assert args.opts["slug"] == 'user/repo'
 
-    # python 3.5 doesn't have "assert_called_once"
-    assert_called_once = getattr(
-        mock_get_repo.return_value.get_latest_release,
-        "assert_called_once", None)
-    if callable(assert_called_once):
-        assert_called_once()
-    else:
-        assert mock_get_repo.return_value.get_latest_release.call_count == 1
+    mock_get_repo.return_value.get_latest_release.assert_called_once()
 
 
 @patch.object(satsuki.github.Github, 'get_repo', autospec=True)
@@ -158,14 +144,7 @@ def test_create_execute(mock_get_repo):
     rel_man = ReleaseMgr(args)
     rel_man.execute()
 
-    # python 3.5 doesn't have "assert_called_once"
-    assert_called_once = getattr(
-        mock_get_repo.return_value.create_git_release,
-        "assert_called_once", None)
-    if callable(assert_called_once):
-        assert_called_once()
-    else:
-        assert mock_get_repo.return_value.create_git_release.call_count == 1
+    mock_get_repo.return_value.create_git_release.assert_called_once()
 
 
 @patch.object(satsuki.github.Github, 'get_repo', autospec=True)
@@ -185,13 +164,7 @@ def test_find_and_delete(mock_get_repo):
     rel_man = ReleaseMgr(args)
     rel_man.execute()
 
-    # python 3.5 doesn't have "assert_called_once"
-    assert_called_once = getattr(
-        mock_release.delete_release, "assert_called_once", None)
-    if callable(assert_called_once):
-        assert_called_once()
-    else:
-        assert mock_release.delete_release.call_count == 1
+    mock_release.delete_release.assert_called_once()
 
 
 def test_blank_arguments():
