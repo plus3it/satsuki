@@ -100,7 +100,7 @@ def test_no_release_no_tag(mock_get_repo):
 
     # this is to simulate no repo existing yet, i.e., need to create
     mock_get_repo.return_value.get_latest_release.side_effect = \
-        github.GithubException('status', 'data')
+        github.GithubException('status', 'data', None)
 
     with pytest.raises(AttributeError):
         Arguments(
@@ -115,7 +115,7 @@ def test_no_release(mock_get_repo):
 
     # this is to simulate no repo existing yet, i.e., need to create
     mock_get_repo.return_value.get_release.side_effect = \
-        github.GithubException('status', 'data')
+        github.GithubException('status', 'data', None)
 
     args = Arguments(
         token='abc',
@@ -134,7 +134,7 @@ def test_create_execute(mock_get_repo):
 
     # this is to simulate no repo existing yet, i.e., need to create
     mock_get_repo.return_value.get_release.side_effect = \
-        github.GithubException('status', 'data')
+        github.GithubException('status', 'data', None)
 
     args = Arguments(
         token='abc',
