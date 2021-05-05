@@ -229,9 +229,8 @@ class Arguments():
             logger.info("Setting up variable substitution...")
 
             # open gravitybee info file and use app version
-            info_file = open(self.opts["gb_info_file"], "r")
-            gb_info = json.loads(info_file.read())
-            info_file.close()
+            with open(self.opts["gb_info_file"], "r") as info_file:
+                gb_info = json.loads(info_file.read())
 
             if gb_info.get('app_version', None) is not None:
                 self.gb_subs['gb_pkg_ver'] = gb_info['app_version']
@@ -347,17 +346,15 @@ class Arguments():
         """Handle the files_file."""
         if self.opts["files_file"] \
                 and os.path.isfile(self.opts["files_file"]):
-            files_file = open(self.opts["files_file"], "r")
-            self.lists["file_info"] += json.loads(files_file.read())
-            files_file.close()
+            with open(self.opts["files_file"], "r") as files_file:
+                self.lists["file_info"] += json.loads(files_file.read())
 
     def _init_gb_files_file(self):
         """Handle the GravityBee files_file."""
         if os.path.exists(Arguments.GB_FILES_FILE) \
                 and self.opts["user_cmd"] == Arguments.CMD_UPSERT:
-            files_file = open(Arguments.GB_FILES_FILE, "r")
-            self.lists["file_info"] += json.loads(files_file.read())
-            files_file.close()
+            with open(Arguments.GB_FILES_FILE, "r") as files_file:
+                self.lists["file_info"] += json.loads(files_file.read())
 
     def _init_cmd_line_files(self):
         """Handle the command line files, et al."""
@@ -464,9 +461,8 @@ class Arguments():
                 sha_filename = Template(Arguments.HASH_FILE).safe_substitute({
                     'platform': platform.system().lower()})
 
-                sha_file = open(sha_filename, 'w')
-                sha_file.write(json.dumps(sha_dict))
-                sha_file.close()
+                with open(sha_filename, 'w') as sha_file:
+                    sha_file.write(json.dumps(sha_dict))
 
                 # add the sha hash file to the list of uploads
                 if self.lists["file_info"]:
@@ -900,7 +896,7 @@ class ReleaseMgr():
                             logger.info("Deleting release: %s", release.title)
                             release.delete_release()
                             raise github.UnknownObjectException(
-                                "404", "Spoof to hit except")
+                                "404", "Spoof to hit except", headers=None)
 
                         logger.info(
                             "Tag %s still connected to release: %s",
