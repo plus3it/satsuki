@@ -229,7 +229,9 @@ class Arguments():
             logger.info("Setting up variable substitution...")
 
             # open gravitybee info file and use app version
-            with open(self.opts["gb_info_file"], "r") as info_file:
+            with open(
+                self.opts["gb_info_file"], "r", encoding="utf8"
+            ) as info_file:
                 gb_info = json.loads(info_file.read())
 
             if gb_info.get('app_version', None) is not None:
@@ -346,14 +348,18 @@ class Arguments():
         """Handle the files_file."""
         if self.opts["files_file"] \
                 and os.path.isfile(self.opts["files_file"]):
-            with open(self.opts["files_file"], "r") as files_file:
+            with open(
+                self.opts["files_file"], "r", encoding="utf8"
+            ) as files_file:
                 self.lists["file_info"] += json.loads(files_file.read())
 
     def _init_gb_files_file(self):
         """Handle the GravityBee files_file."""
         if os.path.exists(Arguments.GB_FILES_FILE) \
                 and self.opts["user_cmd"] == Arguments.CMD_UPSERT:
-            with open(Arguments.GB_FILES_FILE, "r") as files_file:
+            with open(
+                Arguments.GB_FILES_FILE, "r", encoding="utf8"
+            ) as files_file:
                 self.lists["file_info"] += json.loads(files_file.read())
 
     def _init_cmd_line_files(self):
@@ -461,7 +467,7 @@ class Arguments():
                 sha_filename = Template(Arguments.HASH_FILE).safe_substitute({
                     'platform': platform.system().lower()})
 
-                with open(sha_filename, 'w') as sha_file:
+                with open(sha_filename, 'w', encoding='utf8') as sha_file:
                     sha_file.write(json.dumps(sha_dict))
 
                 # add the sha hash file to the list of uploads
