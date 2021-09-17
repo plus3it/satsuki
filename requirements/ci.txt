@@ -1,2 +1,2 @@
 pipenv==2021.5.29
-virtualenv==20.7.2
+virtualenv==20.8.0
