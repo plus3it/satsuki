@@ -1,4 +1,4 @@
 -r ./pip.txt
 
-flake8==3.9.2
+flake8==4.0.0
 pylint==2.11.1
