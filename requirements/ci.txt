@@ -1,2 +1,2 @@
-pipenv==2021.11.9
+pipenv==2021.11.15
 virtualenv==20.10.0
