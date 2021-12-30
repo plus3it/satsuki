@@ -1,2 +1,2 @@
 pipenv==2021.11.23
-virtualenv==20.11.1
+virtualenv==20.11.2
