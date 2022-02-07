@@ -1,4 +1,4 @@
 -r ./install.txt
 -r ./pip.txt
 
-pytest==6.2.5
+pytest==7.0.0
