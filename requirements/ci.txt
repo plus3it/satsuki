@@ -1,2 +1,2 @@
-pipenv==2022.8.30
+pipenv==2022.8.31
 virtualenv==20.16.4
