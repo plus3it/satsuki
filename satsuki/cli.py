@@ -9,9 +9,9 @@ import satsuki
 click.disable_unicode_literals_warning = True
 
 
-@click.command(context_settings=dict(
-    ignore_unknown_options=True,
-))
+@click.command(context_settings={
+    "ignore_unknown_options": True,
+})
 @click.version_option(version=satsuki.__version__)
 @click.option('--token', 'token', envvar='SATS_TOKEN',
               default=None, help='[Required] The OATH GitHub API token to use '
