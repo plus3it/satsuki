@@ -1,2 +1,2 @@
 pipenv==2023.6.12
-virtualenv==20.23.0
+virtualenv==20.23.1
