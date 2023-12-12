@@ -1,4 +1,4 @@
 -r ./pip.txt
 
 flake8==6.1.0
-pylint==3.0.2
+pylint==3.0.3
