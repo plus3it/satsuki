@@ -1,4 +1,4 @@
 click==8.0.4;python_version<="3.6"
 click==8.1.7;python_version>="3.7"
 PyGithub==1.56;python_version<="3.6"
-PyGithub==2.3.0;python_version>="3.7"
+PyGithub==2.4.0;python_version>="3.7"
