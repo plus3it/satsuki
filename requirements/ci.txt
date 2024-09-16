@@ -1,2 +1,2 @@
-pipenv==2024.0.1
+pipenv==2024.0.2
 virtualenv==20.26.4
