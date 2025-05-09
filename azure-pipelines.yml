@@ -8,7 +8,7 @@ pr:
     - master
 
 variables:
-  pythonVersion: 3.8
+  pythonVersion: 3.12
   venvDirectory: $(System.DefaultWorkingDirectory)/venv
 
 jobs:
