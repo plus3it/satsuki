@@ -6,9 +6,7 @@ stages:
   - test
   - deploy
 python:
-  - "3.8"
-  - "3.9"
-  - "3.10"
+  - "3.12"
 
 env:
   global:
@@ -29,7 +27,7 @@ script:
 jobs:
   include:
     - stage: lint
-      python: 3.8
+      python: 3.12
       install:
         - python -m pip install -r requirements/lint.txt
         - python -m pip install --editable .
@@ -40,7 +38,7 @@ jobs:
     - stage: deploy
       name: Deploy to Test PyPI
       if: branch = master AND type != pull_request
-      python: 3.8
+      python: 3.12
       install: skip
       script:
         - sed -i -E "s/^(version = )(.*)/\1\2.$TRAVIS_BUILD_NUMBER/" $TRAVIS_BUILD_DIR/setup.cfg
@@ -59,7 +57,7 @@ jobs:
     - stage: deploy
       name: Create GitHub Release
       if: branch = master AND type != pull_request
-      python: 3.8
+      python: 3.12
       install: skip
       script:
         - export RELEASE_BODY="* [$REPO v$RELEASE_VERSION CHANGELOG](https://github.com/$OWNER/$REPO/blob/$RELEASE_VERSION/CHANGELOG.rst)"
@@ -79,7 +77,7 @@ jobs:
     - stage: deploy
       name: Deploy to PyPI
       if: tag is present
-      python: 3.8
+      python: 3.12
       install: skip
       script: skip
       deploy:
