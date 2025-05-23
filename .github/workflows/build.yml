@@ -52,7 +52,7 @@ jobs:
       - name: Upload distributions
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: release-dists
+          name: release-dists-$${{ matrix.python-version}}
           path: dist/
 
   # Run the build job first, then create release on push to master or on-demand workflow dispatch
@@ -77,11 +77,11 @@ jobs:
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
-    - name: Retrieve release distributions
-      uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-      with:
-        name: release-dists
-        path: dist/
+      - name: Retrieve release distributions
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: release-dists-3.12
+          path: dist/
 
-    - name: Publish package distributions to PyPI
-      uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
+      - name: Publish package distributions to PyPI
+        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc

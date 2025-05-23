@@ -81,11 +81,11 @@ jobs:
       install: skip
       script: skip
       deploy:
-          - provider: pypi
-            distributions: sdist bdist_wheel
-            username: plus3it
-            password:
-              secure: oiATfkswECO0XoCG0mKuxKhOL87zzTNJChoNJYTqeQIj+EDNX5rgPWaIm9EWD7AT5NgjdAP2XoqqgYRIG9p8NZgXFHQ9wp37tI4ZcLeRymmq5p3TqFA+peQ1dyf71WRivJX3zhs1yIDseISdVrqQbLqWyakCVQ5b8qMDakJ4kIXcqkRw20qW3bFeRc+ap2BiBv6uPPb8BYBAYOwP6g/pHqlIUq5Brxn0Y0olp5sIgjfq2yX+i0iMFMZBuihgKWxJjXsK19Jvyqvgyrd8EZJeySsw7hnyZbWeCaUGPsJrMFwJ+IbslP3tadB6fiK1Q5rLwVMJhvFlaZOpEQn5Y/KXqjobCMM6SClPVXmFONnix8LEN3KIbysL6LPwLrMOez+q2MNprfJ3GWGbop4fGsCi3P8yaEV2I+Hj85GgJsiQ6TkyEUtX3EPZp7LLWXiP2fpoSnU01ojDXryM4Sbk1gt9zsB3K8iifY85kOTw11wVRL/sfm8N20BJECZrFvKAEGKstJ7ZLZaqIqU80dVDfce8iqrjp+7mDd2Wer/kHm9miinkfp/x9YFPO5feQjOd3sIJIjM3TswvL2JpfOEPK+fVrxC+xWTuZZyd5XFxJx/xkXz8z2Zt5CPqwR24v7hx9nt559MKlEqekBJgsQLddaXU2InFfgZ0gH+aneAF2DGWC9A=
-            upload_docs: false
-            on:
-              tags: true
+        - provider: pypi
+          distributions: sdist bdist_wheel
+          username: plus3it
+          password:
+            secure: oiATfkswECO0XoCG0mKuxKhOL87zzTNJChoNJYTqeQIj+EDNX5rgPWaIm9EWD7AT5NgjdAP2XoqqgYRIG9p8NZgXFHQ9wp37tI4ZcLeRymmq5p3TqFA+peQ1dyf71WRivJX3zhs1yIDseISdVrqQbLqWyakCVQ5b8qMDakJ4kIXcqkRw20qW3bFeRc+ap2BiBv6uPPb8BYBAYOwP6g/pHqlIUq5Brxn0Y0olp5sIgjfq2yX+i0iMFMZBuihgKWxJjXsK19Jvyqvgyrd8EZJeySsw7hnyZbWeCaUGPsJrMFwJ+IbslP3tadB6fiK1Q5rLwVMJhvFlaZOpEQn5Y/KXqjobCMM6SClPVXmFONnix8LEN3KIbysL6LPwLrMOez+q2MNprfJ3GWGbop4fGsCi3P8yaEV2I+Hj85GgJsiQ6TkyEUtX3EPZp7LLWXiP2fpoSnU01ojDXryM4Sbk1gt9zsB3K8iifY85kOTw11wVRL/sfm8N20BJECZrFvKAEGKstJ7ZLZaqIqU80dVDfce8iqrjp+7mDd2Wer/kHm9miinkfp/x9YFPO5feQjOd3sIJIjM3TswvL2JpfOEPK+fVrxC+xWTuZZyd5XFxJx/xkXz8z2Zt5CPqwR24v7hx9nt559MKlEqekBJgsQLddaXU2InFfgZ0gH+aneAF2DGWC9A=
+          upload_docs: false
+          on:
+            tags: true
