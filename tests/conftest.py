@@ -12,5 +12,5 @@ def pytest_generate_tests(metafunc):
     if the argument is specified in the list of test "fixturenames".
     """
     option_value = metafunc.config.option.token
-    if 'token' in metafunc.fixturenames and option_value is not None:
+    if "token" in metafunc.fixturenames and option_value is not None:
         metafunc.parametrize("token", [option_value])
