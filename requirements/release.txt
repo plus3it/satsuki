@@ -1,3 +1,0 @@
--r ./pip.txt
-
-bumpversion==0.6.0
