@@ -18,6 +18,7 @@ jobs:
     name: Upload release to PyPI
     runs-on: ubuntu-latest
     permissions:
+      actions: read  # Required to download artifacts from other workflow runs
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
       - name: Retrieve release distributions
