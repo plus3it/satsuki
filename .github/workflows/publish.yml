@@ -26,6 +26,8 @@ jobs:
           # Use dists from the python 3.12 build on ubuntu-latest
           name: dists-3.12-ubuntu-latest-${{ github.sha }}
           path: dist/
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
