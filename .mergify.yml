@@ -1,33 +1,14 @@
 pull_request_rules:
-  - name: automatically approve dependabot pull requests
+  - name: approve dependabot pull requests
     conditions:
-      - author~=dependabot\[bot\]|dependabot-preview\[bot\]
-      - status-success=Travis CI - Pull Request
-      - status-success=continuous-integration.azure-devops
+      - author=dependabot[bot]
     actions:
       review:
         type: APPROVE
 
-  - name: automatically merge dependabot pull requests
+  - name: merge dependabot pull requests
     conditions:
-      - author~=dependabot\[bot\]|dependabot-preview\[bot\]
-      - "#approved-reviews-by>=1"
-    actions:
-      merge:
-        method: merge
-
-  - name: automatically approve GitHub Action pull requests
-    conditions:
-      - author~=github-actions\[bot\]
-      - status-success=Travis CI - Pull Request
-      - status-success=continuous-integration.azure-devops
-    actions:
-      review:
-        type: APPROVE
-
-  - name: automatically merge GitHub Action pull requests
-    conditions:
-      - author~=github-actions\[bot\]
+      - author=dependabot[bot]
       - "#approved-reviews-by>=1"
     actions:
       merge:

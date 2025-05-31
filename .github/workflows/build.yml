@@ -1,0 +1,71 @@
+name: Build, test, release
+
+on:
+  # Run on demand
+  workflow_dispatch:
+
+  # Run pull requests against the default branch
+  pull_request:
+    branches: [master]
+
+  # Run on push to default branch
+  push:
+    branches: [master]
+
+concurrency:
+  group: build-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+        os: ["ubuntu-latest", "windows-latest"]
+    steps:
+      - name: Clone this git repository
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: requirements/*.txt
+
+      - name: Install Python requirements
+        run: python -m pip install -r requirements/test.txt
+
+      - name: Build package
+        run: python -m build
+
+      - name: Install package
+        run: python -m pip install ./dist/satsuki-*.whl
+        shell: bash
+
+      - name: Run python tests
+        run: pytest tests/
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: dists-${{ matrix.python-version}}-${{ matrix.os }}-${{ github.sha }}
+          path: dist/
+          if-no-files-found: error
+          retention-days: 7
+
+  # Run the build job first, then create release on push to master or on-demand workflow dispatch
+  release:
+    needs:
+      - build-test
+    if: github.event_name != 'pull_request'
+    uses: plus3it/actions-workflows/.github/workflows/release.yml@78caa4f6a2b5426af0ade68fb706176ee58fda84
+    secrets:
+      release-token: "${{ secrets.GH_RELEASES_TOKEN }}"
+    with:
+      mockstacktest-enable: false
+      tardigradelint-enable: false

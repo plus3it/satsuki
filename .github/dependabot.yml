@@ -1,15 +1,28 @@
 version: 2
 updates:
-- package-ecosystem: pip
-  directory: "/"
-  schedule:
-    interval: daily
-  open-pull-requests-limit: 10
-  allow:
-  - dependency-type: direct
-  - dependency-type: indirect
+  - package-ecosystem: pip
+    directory: "/"
+    schedule:
+      interval: daily
+    open-pull-requests-limit: 10
+    allow:
+      - dependency-type: direct
+      - dependency-type: indirect
 
-- package-ecosystem: github-actions
-  directory: /
-  schedule:
-    interval: daily
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      docker:
+        patterns:
+          - "*"
