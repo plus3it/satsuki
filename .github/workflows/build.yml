@@ -1,4 +1,4 @@
-name: Build, test, release, publish
+name: Build, test, release
 
 on:
   # Run on demand
@@ -12,10 +12,6 @@ on:
   push:
     branches: [master]
 
-  # Run when a release is created
-  release:
-    types: [released]
-
 concurrency:
   group: build-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
@@ -25,10 +21,11 @@ permissions:
 
 jobs:
   build-test:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python-version: ["3.12"]
+        os: ["ubuntu-latest", "windows-latest"]
     steps:
       - name: Clone this git repository
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
@@ -52,36 +49,17 @@ jobs:
       - name: Upload distributions
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: release-dists-$${{ matrix.python-version}}
+          name: dists-$${{ matrix.python-version}}-${{ matrix.os }}-${{ github.sha }}
           path: dist/
 
   # Run the build job first, then create release on push to master or on-demand workflow dispatch
   release:
     needs:
       - build-test
-    if: github.event_name != 'release' && github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request'
     uses: plus3it/actions-workflows/.github/workflows/release.yml@78caa4f6a2b5426af0ade68fb706176ee58fda84
     secrets:
       release-token: "${{ secrets.GH_RELEASES_TOKEN }}"
     with:
       mockstacktest-enable: false
       tardigradelint-enable: false
-
-  # publish to PyPI
-  pypi-publish:
-    if: github.event_name == 'release'
-    needs:
-      - build-test
-    name: Upload release to PyPI
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
-    steps:
-      - name: Retrieve release distributions
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
-        with:
-          name: release-dists-3.12
-          path: dist/
-
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
