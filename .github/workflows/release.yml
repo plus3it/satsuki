@@ -32,6 +32,8 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 1
+      - run: ${{ tojson(github.event) }}
+        shell: cat {0}
 
   # Create release and publish to PyPI
   release-publish:
@@ -53,7 +55,7 @@ jobs:
 
       - name: Create GitHub release
         id: release
-        uses: lorengordon/actions-workflows/.github/actions/release@1581340412b9c9dfec7148949ce4a42a1640665e
+        uses: lorengordon/actions-workflows/.github/actions/release@5bac9fe38c87d339fc3a900aa27c4db7646c3849
         with:
           release-token: "${{ secrets.GH_RELEASES_TOKEN }}"
 
