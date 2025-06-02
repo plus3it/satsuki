@@ -32,13 +32,12 @@ jobs:
           path: dist/
           if-no-files-found: error
           retention-days: 1
-      - run: ${{ tojson(github.event) }}
-        shell: cat {0}
 
   # Create release and publish to PyPI
   release-publish:
     if: |
-      github.ref == 'refs/heads/master' &&
+      github.event.workflow_run != 'pull_request' &&
+      github.event.workflow_run.head_branch == github.event.repository.default_branch &&
       github.event.workflow_run.conclusion == 'success'
     name: Create release and publish package
     runs-on: ubuntu-latest
