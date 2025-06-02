@@ -48,7 +48,7 @@ jobs:
     steps:
       - name: Create GitHub release
         id: release
-        uses: lorengordon/actions-workflows/.github/actions/release@c11949770c17caa2fe60a792bcd0e7f332a231a2
+        uses: lorengordon/actions-workflows/.github/actions/release@9a5eaf0ce604c640dab9c7d79e0a9b9643bd69f7
         with:
           release-token: "${{ secrets.GH_RELEASES_TOKEN }}"
 
