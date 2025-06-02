@@ -26,8 +26,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
 
-      - run: ls -al dist/
-
       - name: Upload artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -36,16 +34,34 @@ jobs:
           if-no-files-found: error
           retention-days: 1
 
-  # Create release and publish to PyPI
-  release-publish:
+  # Create release
+  release:
     if: |
       github.event.workflow_run != 'pull_request' &&
-      github.event.workflow_run.head_branch == github.event.repository.default_branch &&
-      github.event.workflow_run.conclusion == 'success'
+      github.event.workflow_run.head_branch == github.event.repository.default_branch
     name: Create release and publish package
     runs-on: ubuntu-latest
     needs:
       - check-artifacts
+    outputs:
+      condition: ${{ steps.release.outputs.release-condition }}
+    steps:
+      - name: Create GitHub release
+        id: release
+        uses: lorengordon/actions-workflows/.github/actions/release@c11949770c17caa2fe60a792bcd0e7f332a231a2
+        with:
+          release-token: "${{ secrets.GH_RELEASES_TOKEN }}"
+
+      - run: 'echo "Release condition: ${{ steps.release.outputs.release-condition }}"'
+      - run: 'echo "condition=${{ steps.release.outputs.release-condition }}" >> "$GITHUB_OUTPUT"'
+
+  # Publish to PyPI
+  publish:
+    name: Create release and publish package
+    runs-on: ubuntu-latest
+    needs:
+      - release
+    if: needs.release.outputs.condition == 'true'
     permissions:
       id-token: write  # IMPORTANT: this permission is mandatory for trusted publishing
     steps:
@@ -55,15 +71,7 @@ jobs:
           name: dists
           path: dist/
 
-      - name: Create GitHub release
-        id: release
-        uses: lorengordon/actions-workflows/.github/actions/release@c11949770c17caa2fe60a792bcd0e7f332a231a2
-        with:
-          release-token: "${{ secrets.GH_RELEASES_TOKEN }}"
-
-      - run: 'echo "Release condition: ${{ steps.release.outputs.release-condition }}"'
       - run: ls -al dist/
 
       - name: Publish package distributions to PyPI
-        if: steps.release.outputs.release-condition == 'true'
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
