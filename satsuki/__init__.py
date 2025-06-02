@@ -33,7 +33,7 @@ import github
 import github.GithubException
 
 
-__version__ = "0.1.82"
+__version__ = "0.1.83"
 EXIT_OK = 0
 
 logging.config.fileConfig(
