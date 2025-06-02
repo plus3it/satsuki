@@ -1,4 +1,4 @@
-name: Build, test, release
+name: Build and test
 
 on:
   # Run on demand
@@ -51,21 +51,10 @@ jobs:
         run: pytest tests/
 
       - name: Upload distributions
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: dists-${{ matrix.python-version}}-${{ matrix.os }}-${{ github.sha }}
+          name: dists
           path: dist/
           if-no-files-found: error
-          retention-days: 7
-
-  # Run the build job first, then create release on push to master or on-demand workflow dispatch
-  release:
-    needs:
-      - build-test
-    if: github.event_name != 'pull_request'
-    uses: plus3it/actions-workflows/.github/workflows/release.yml@78caa4f6a2b5426af0ade68fb706176ee58fda84
-    secrets:
-      release-token: "${{ secrets.GH_RELEASES_TOKEN }}"
-    with:
-      mockstacktest-enable: false
-      tardigradelint-enable: false
+          retention-days: 1
