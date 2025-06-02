@@ -25,6 +25,9 @@ jobs:
           path: dist/
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id }}
+
+      - run: ls -al dist/
+
       - name: Upload artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -58,9 +61,8 @@ jobs:
         with:
           release-token: "${{ secrets.GH_RELEASES_TOKEN }}"
 
-      - shell: bash
-        run: |
-          echo "Release condition: ${{ steps.release.outputs.release-condition }}"
+      - run: 'echo "Release condition: ${{ steps.release.outputs.release-condition }}"'
+      - run: ls -al dist/
 
       - name: Publish package distributions to PyPI
         if: steps.release.outputs.release-condition == 'true'
