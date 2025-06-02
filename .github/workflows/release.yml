@@ -58,6 +58,10 @@ jobs:
         with:
           release-token: "${{ secrets.GH_RELEASES_TOKEN }}"
 
+      - shell: bash
+        run: |
+          echo "Release condition: ${{ steps.release.outputs.release-condition }}"
+
       - name: Publish package distributions to PyPI
         if: steps.release.outputs.release-condition == 'true'
         uses: pypa/gh-action-pypi-publish@76f52bc884231f62b9a034ebfe128415bbaabdfc
