@@ -1,2 +1,2 @@
 click==8.2.1
-PyGithub==2.7.0
+PyGithub==2.8.1
