@@ -19,7 +19,7 @@ jobs:
       actions: read  # Required to download artifacts from other workflow runs
     steps:
       - name: Retrieve release distributions
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: dists
           path: dist/
@@ -27,7 +27,7 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4
         with:
           name: dists
           path: dist/
@@ -52,14 +52,14 @@ jobs:
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
 
       - name: Retrieve release distributions
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        uses: actions/download-artifact@018cc2cf5baa6db3ef3c5f8a56943fffe632ef53
         with:
           name: dists
           path: dist/
 
       - name: Create GitHub release
         id: release
-        uses: plus3it/actions-workflows/.github/actions/release@3b8e48de2da8233d170c1d094932a562d9a36990
+        uses: plus3it/actions-workflows/.github/actions/release@269d875599c92395f7fa99cab43edc1820798e61
         with:
           release-token: "${{ secrets.GH_RELEASES_TOKEN }}"
           release-files: |
