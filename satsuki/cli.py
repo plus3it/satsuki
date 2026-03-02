@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 """satsuki cli."""
+
 import sys
 
 import click
