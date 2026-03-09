@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # pylint: disable=redefined-outer-name
 """Test Satsuki module."""
+
 import os
 import uuid
 from unittest.mock import patch, MagicMock
