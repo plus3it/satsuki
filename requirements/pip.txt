@@ -1,5 +1,5 @@
 pip==26.2.1
 
-build==1.5.1
+build==1.6.0
 
 setuptools==84.0.0
